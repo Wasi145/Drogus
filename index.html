@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DrugInfo Live v10 · Wikipedia Edition</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<style>
+:root{--bg:#f0f5fa;--card:#fff;--text:#0b2b4b;--text-soft:#5a7a96;--accent:#2c7da0;--accent-dark:#1b4d6e;--border:#d0e2f2;--success:#2a9d8f;--warn:#e9c46a;--danger:#e63946;--wiki:#636363;--shadow:0 10px 30px -10px rgba(0,40,80,.15);--bg-input:#f4f8fc;}
+body.dark{--bg:#0d1b2a;--card:#162a3d;--text:#e8f1fa;--text-soft:#8fadc7;--border:#2b4560;--shadow:0 10px 30px -10px rgba(0,0,0,.6);--bg-input:#0f2233;--wiki:#a0a0a0;}
+body.sepia{--bg:#f4ecd8;--card:#fdf6e3;--text:#3b2f1e;--text-soft:#6b5c3e;--border:#e0d4b0;--bg-input:#f9f2dd;--accent:#8b5e34;--accent-dark:#5c3d1e;}
+body.high-contrast{--bg:#000;--card:#111;--text:#fff;--text-soft:#ddd;--border:#fff;--accent:#ffff00;--accent-dark:#ffff00;--bg-input:#222;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background:var(--bg);color:var(--text);min-height:100vh;padding:1rem;transition:.3s;}
+.container{max-width:1300px;margin:0 auto;}
+header{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;}
+h1{font-size:1.5rem;display:flex;align-items:center;gap:10px;}
+h1 i{color:var(--accent);}
+.badge{font-size:.62rem;background:var(--success);color:#fff;padding:3px 10px;border-radius:20px;font-weight:600;}
+.badge.multi{background:linear-gradient(135deg,#2c7da0,#2a9d8f,#e9c46a,#636363);}
+.actions{display:flex;gap:5px;flex-wrap:wrap;}
+.icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;font-size:.9rem;}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);transform:translateY(-2px);}
+.tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:50px;padding:5px;margin-bottom:1rem;overflow-x:auto;box-shadow:var(--shadow);}
+.tab{padding:8px 16px;border-radius:50px;border:none;background:transparent;color:var(--text-soft);cursor:pointer;font-size:.82rem;font-weight:500;white-space:nowrap;transition:.2s;display:flex;align-items:center;gap:6px;}
+.tab:hover{color:var(--accent);}
+.tab.active{background:var(--accent-dark);color:#fff;}
+.view{display:none;}
+.view.active{display:block;animation:fade .3s;}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.search-wrap{position:relative;margin-bottom:.6rem;}
+.search-box{background:var(--card);border-radius:60px;padding:.5rem;display:flex;gap:.5rem;border:1px solid var(--border);box-shadow:var(--shadow);transition:border-color .2s;}
+.search-box:focus-within{border-color:var(--accent);}
+.search-box input{flex:1;padding:1rem 1.5rem;border:none;border-radius:50px;background:var(--bg-input);color:var(--text);font-size:1rem;outline:none;min-width:100px;}
+.search-box button{padding:1rem 1.6rem;border:none;border-radius:50px;background:var(--accent-dark);color:#fff;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:6px;}
+.search-box button:hover:not(:disabled){background:var(--accent);transform:scale(1.02);}
+.search-box .mic-btn{background:transparent;color:var(--text-soft);padding:1rem;border-radius:50%;border:none;cursor:pointer;transition:.2s;}
+.search-box .mic-btn:hover{color:var(--accent);background:var(--bg-input);}
+.search-box .mic-btn.recording{color:var(--danger);animation:pulse 1s infinite;}
+@keyframes pulse{50%{transform:scale(1.15);}}
+.autocomplete{position:absolute;top:100%;left:0;right:0;margin-top:.3rem;background:var(--card);border:1px solid var(--border);border-radius:1rem;box-shadow:var(--shadow);max-height:400px;overflow-y:auto;z-index:100;display:none;}
+.autocomplete.show{display:block;}
+.ac-item{padding:.7rem 1.2rem;cursor:pointer;display:flex;justify-content:space-between;gap:.6rem;align-items:center;border-bottom:1px solid var(--border);transition:.15s;font-size:.9rem;}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.selected{background:var(--bg-input);}
+.ac-type{font-size:.68rem;padding:2px 10px;border-radius:20px;background:var(--bg-input);color:var(--text-soft);border:1px solid var(--border);}
+.ac-name mark{background:#ffe082;color:#0b2b4b;padding:0 2px;border-radius:3px;}
+.quick-searches{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.7rem;}
+.quick-searches button{background:var(--card);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:.78rem;color:var(--text-soft);cursor:pointer;transition:.2s;}
+.quick-searches button:hover{border-color:var(--accent);color:var(--accent);}
+.mode-bar{display:flex;gap:5px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
+.mode-btn{padding:5px 12px;font-size:.76rem;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text-soft);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:5px;}
+.mode-btn.active{background:var(--accent-dark);color:#fff;border-color:var(--accent-dark);}
+.mode-info{font-size:.74rem;color:var(--text-soft);margin-left:auto;}
+.source-panel{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:.8rem 1rem;margin-bottom:1rem;}
+.source-panel h4{font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem;display:flex;align-items:center;gap:6px;}
+.source-panel h4 button{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--text-soft);font-size:.7rem;padding:2px 8px;border-radius:20px;cursor:pointer;}
+.source-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;}
+.source-grid.collapsed{display:none;}
+.source-item{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:10px;background:var(--bg-input);font-size:.78rem;border:1px solid var(--border);}
+.source-item .dot{width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0;}
+.source-item .dot.loading{background:var(--warn);animation:pulse 1s infinite;}
+.source-item .dot.error{background:var(--danger);}
+.source-item .name{color:var(--text);font-weight:500;}
+.source-item .desc{color:var(--text-soft);font-size:.7rem;margin-left:auto;}
+.source-item.wiki{border-color:var(--wiki);}
+.source-item.wiki .name{color:var(--wiki);font-weight:600;}
+.status-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;font-size:.8rem;color:var(--text-soft);flex-wrap:wrap;gap:.5rem;}
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:1rem;}
+.summary-stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.7rem .5rem;text-align:center;}
+.summary-stat .num{font-size:1.3rem;font-weight:700;color:var(--accent);line-height:1;}
+.summary-stat .lbl{font-size:.68rem;color:var(--text-soft);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:720px){.cards{grid-template-columns:1fr;}}
+.card{background:var(--card);border-radius:1.4rem;padding:1.4rem;border:1px solid var(--border);box-shadow:var(--shadow);transition:.2s;}
+.card.full{grid-column:1/-1;}
+.card.wiki-card{border-left:5px solid var(--wiki);}
+.card h3{font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:8px;color:var(--accent);border-bottom:2px dashed var(--border);padding-bottom:.6rem;flex-wrap:wrap;}
+.card.wiki-card h3{color:var(--wiki);}
+.card h3 i{font-size:1.1rem;}
+.card h3 .src-badge{margin-left:auto;font-size:.65rem;background:var(--bg-input);color:var(--text-soft);padding:2px 8px;border-radius:20px;border:1px solid var(--border);font-weight:400;}
+.card.wiki-card h3 .src-badge{background:#e8e8e8;color:#3a3a3a;border-color:#c0c0c0;}
+body.dark .card.wiki-card h3 .src-badge{background:#2a2a2a;color:#c0c0c0;border-color:#444;}
+.detail{margin-bottom:.85rem;font-size:.9rem;line-height:1.55;}
+.detail strong{color:var(--accent);display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.card.wiki-card .detail strong{color:var(--wiki);}
+.detail p{margin-top:4px;}
+.wiki-img{max-width:100%;border-radius:12px;margin:8px 0;display:block;border:1px solid var(--border);}
+.wiki-caption{font-size:.75rem;color:var(--text-soft);font-style:italic;margin-bottom:.6rem;}
+.pill-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px;}
+.pill{background:var(--bg-input);border:1px solid var(--border);padding:4px 12px;border-radius:20px;font-size:.78rem;color:var(--text);transition:.15s;}
+.pill.clickable{cursor:pointer;}
+.pill.clickable:hover{background:var(--accent-soft);border-color:var(--accent);}
+.pill.brand{border-color:var(--accent);color:var(--accent);background:var(--card);}
+.pill.manufacturer{border-color:var(--warn);color:#8a5a00;background:#fff8e6;}
+.pill.who{border-color:var(--success);color:#1f6b52;background:#e8f8f2;}
+.pill.danger{border-color:var(--danger);color:var(--danger);background:#ffe5e5;}
+.pill.wiki{border-color:var(--wiki);color:var(--wiki);background:#f5f5f5;}
+body.dark .pill.manufacturer{background:#2a2410;color:#e9c46a;}
+body.dark .pill.who{background:#1a3b32;color:#b8e6d4;}
+body.dark .pill.danger{background:#3d1418;color:#ffb3b3;}
+body.dark .pill.wiki{background:#2a2a2a;color:#c0c0c0;}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text-soft);}
+.empty i{font-size:3rem;display:block;margin-bottom:1rem;opacity:.4;color:var(--accent);}
+.spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:2rem auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-box{background:#fff3e0;border-left:6px solid #f5b342;padding:1rem 1.2rem;border-radius:12px;color:#8a5a00;margin-bottom:1rem;font-size:.86rem;display:flex;gap:10px;}
+body.dark .error-box{background:#2a2410;color:#e9c46a;}
+.info-note{background:#e8f8f2;border-left:6px solid var(--success);padding:.8rem 1.1rem;border-radius:12px;color:#1f6b52;font-size:.84rem;margin-bottom:1rem;display:flex;gap:10px;align-items:center;}
+body.dark .info-note{background:#1a3b32;color:#b8e6d4;}
+.danger-note{background:#ffe5e5;border-left:6px solid var(--danger);padding:.9rem 1.1rem;border-radius:12px;color:#8b1a1a;font-size:.86rem;margin-bottom:1rem;display:flex;gap:10px;font-weight:500;}
+body.dark .danger-note{background:#3d1418;color:#ffb3b3;}
+.warn-note{background:#fff8e0;border-left:6px solid var(--warn);padding:.9rem 1.1rem;border-radius:12px;color:#7a5a00;font-size:.86rem;margin-bottom:1rem;display:flex;gap:10px;}
+body.dark .warn-note{background:#2a2410;color:#e9c46a;}
+.cache-note{font-size:.7rem;color:var(--text-soft);text-align:right;margin-top:.6rem;}
+.action-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.action-btn{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text-soft);cursor:pointer;font-size:.8rem;transition:.2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
+.action-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px);}
+.action-btn.primary{background:var(--accent-dark);color:#fff;border-color:var(--accent-dark);}
+.action-btn.details-link{background:linear-gradient(135deg,#2c7da0,#2a9d8f);color:#fff;border:none;font-weight:600;}
+.action-btn.wiki-link{background:#f5f5f5;color:#3a3a3a;border-color:#c0c0c0;}
+.action-btn.wiki-link:hover{background:#636363;color:#fff;border-color:#636363;}
+body.dark .action-btn.wiki-link{background:#2a2a2a;color:#c0c0c0;border-color:#444;}
+.compare-table{width:100%;border-collapse:collapse;font-size:.85rem;}
+.compare-table th,.compare-table td{padding:.7rem .9rem;text-align:left;border-bottom:1px solid var(--border);vertical-align:top;}
+.compare-table th{background:var(--bg-input);color:var(--accent);font-weight:600;font-size:.78rem;text-transform:uppercase;}
+.pill-search-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem;margin-bottom:1rem;}
+@media(max-width:600px){.pill-search-grid{grid-template-columns:1fr;}}
+.field-group label{display:block;font-size:.75rem;color:var(--accent);text-transform:uppercase;font-weight:600;margin-bottom:4px;letter-spacing:.5px;}
+.field-group input,.field-group select{width:100%;padding:.7rem 1rem;border-radius:12px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:.9rem;outline:none;}
+.pill-result{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}
+.pill-img{width:70px;height:70px;border-radius:12px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;color:var(--text-soft);flex-shrink:0;font-size:1.6rem;border:1px solid var(--border);}
+.drug-selector{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
+.drug-input{flex:1;min-width:180px;padding:.8rem 1rem;border-radius:12px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:.9rem;outline:none;}
+.selected-drugs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.drug-chip{background:var(--accent-dark);color:#fff;padding:5px 12px;border-radius:20px;font-size:.8rem;display:inline-flex;align-items:center;gap:6px;}
+.drug-chip button{background:transparent;border:none;color:#fff;cursor:pointer;font-size:.85rem;}
+.interaction-result{padding:.9rem 1.1rem;border-radius:12px;margin-bottom:.6rem;border-left:5px solid;}
+.interaction-result.high{background:#ffe5e5;border-color:var(--danger);color:#8b1a1a;}
+.interaction-result.moderate{background:#fff8e0;border-color:var(--warn);color:#7a5a00;}
+.interaction-result.low{background:#e8f8f2;border-color:var(--success);color:#1f6b52;}
+.country-row{display:flex;gap:10px;align-items:center;padding:.7rem 0;border-bottom:1px solid var(--border);font-size:.88rem;}
+.country-flag{font-size:1.4rem;width:2rem;text-align:center;}
+.reminder-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem;display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;}
+.reminder-info strong{display:block;color:var(--accent);font-size:.95rem;}
+.reminder-info small{color:var(--text-soft);font-size:.78rem;}
+.reminder-actions{display:flex;gap:6px;}
+.reminder-actions button{background:transparent;border:1px solid var(--border);border-radius:10px;padding:5px 10px;cursor:pointer;color:var(--text-soft);font-size:.78rem;}
+.pharmacy-toolbar{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
+.pharmacy-toolbar select,.pharmacy-toolbar input{padding:.6rem .9rem;border-radius:12px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:.85rem;outline:none;}
+.pharmacy-toolbar input{flex:1;min-width:150px;}
+.pharmacy-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem;transition:.2s;}
+.pharmacy-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.pharmacy-card strong{color:var(--accent);}
+.pharmacy-card .distance{font-size:.78rem;color:var(--text-soft);background:var(--bg-input);padding:3px 10px;border-radius:20px;display:inline-block;}
+.pharmacy-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.scan-tabs{display:flex;gap:5px;margin-bottom:1rem;flex-wrap:wrap;}
+.scan-tab{padding:7px 14px;font-size:.8rem;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text-soft);cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:5px;}
+.scan-tab.active{background:var(--accent-dark);color:#fff;border-color:var(--accent-dark);}
+.camera-wrap{position:relative;width:100%;max-width:520px;margin:0 auto;background:#000;border-radius:16px;overflow:hidden;}
+.camera-wrap video{width:100%;display:block;}
+.camera-overlay{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+.scan-frame{width:75%;height:75%;border:3px dashed rgba(255,255,255,.7);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.35);}
+.camera-controls{display:flex;justify-content:center;gap:10px;margin-top:1rem;flex-wrap:wrap;}
+.camera-controls button{padding:.9rem 1.6rem;border-radius:50px;border:none;background:var(--accent-dark);color:#fff;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.2s;}
+.camera-controls button.danger{background:var(--danger);}
+.camera-controls button:disabled{opacity:.5;cursor:not-allowed;}
+.live-result{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-top:1rem;animation:fade .3s;}
+.file-drop{border:2px dashed var(--border);border-radius:16px;padding:2rem 1rem;text-align:center;cursor:pointer;transition:.2s;color:var(--text-soft);}
+.file-drop:hover{border-color:var(--accent);color:var(--accent);background:var(--bg-input);}
+.file-drop i{font-size:2rem;margin-bottom:.5rem;display:block;}
+.ocr-preview{max-width:100%;border-radius:12px;margin-bottom:1rem;max-height:300px;object-fit:contain;display:block;margin-left:auto;margin-right:auto;}
+.progress-bar{width:100%;height:8px;background:var(--bg-input);border-radius:10px;overflow:hidden;margin:1rem 0;}
+.progress-bar>div{height:100%;background:var(--accent);transition:width .3s;}
+.chat-layout{display:grid;grid-template-columns:240px 1fr;gap:1rem;}
+@media(max-width:800px){.chat-layout{grid-template-columns:1fr;}}
+.chat-sidebar{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:1rem;max-height:600px;overflow-y:auto;}
+.chat-sidebar h4{font-size:.8rem;color:var(--accent);text-transform:uppercase;margin-bottom:.6rem;letter-spacing:.5px;}
+.chat-sidebar button{width:100%;text-align:left;padding:.6rem .8rem;border-radius:10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-soft);font-size:.8rem;cursor:pointer;margin-bottom:5px;transition:.15s;display:flex;align-items:center;gap:6px;}
+.chat-container{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:1rem;height:520px;overflow-y:auto;margin-bottom:1rem;}
+.chat-msg{padding:.8rem 1.1rem;border-radius:16px;margin-bottom:.8rem;font-size:.88rem;line-height:1.6;max-width:88%;word-wrap:break-word;animation:fade .3s;}
+.chat-msg.user{background:var(--accent-dark);color:#fff;margin-left:auto;border-bottom-right-radius:4px;}
+.chat-msg.bot{background:var(--bg-input);color:var(--text);border-bottom-left-radius:4px;}
+.chat-msg small{display:block;opacity:.7;font-size:.72rem;margin-top:6px;font-style:italic;}
+.chat-msg .src{display:inline-block;font-size:.68rem;background:var(--card);border:1px solid var(--border);padding:2px 8px;border-radius:20px;margin:4px 4px 0 0;color:var(--text-soft);}
+.chat-input-row{display:flex;gap:6px;}
+.chat-input-row input{flex:1;padding:.9rem 1.2rem;border-radius:50px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:.9rem;outline:none;}
+.chat-input-row button{padding:.9rem 1.4rem;border-radius:50px;border:none;background:var(--accent-dark);color:#fff;font-weight:600;cursor:pointer;}
+.typing-dots{display:inline-flex;gap:4px;}
+.typing-dots span{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:bounce 1.2s infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+.news-item{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem;margin-bottom:.7rem;}
+.news-item h4{font-size:.95rem;color:var(--text);margin-bottom:.3rem;}
+.news-item .meta{font-size:.72rem;color:var(--text-soft);margin-bottom:.5rem;}
+.news-item p{font-size:.85rem;color:var(--text-soft);line-height:1.5;}
+.history-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.8rem 1rem;margin-bottom:.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:.15s;}
+.history-item:hover{border-color:var(--accent);}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--accent-dark);color:#fff;padding:.85rem 1.5rem;border-radius:50px;font-size:.88rem;font-weight:500;box-shadow:0 12px 30px -8px rgba(0,0,0,.4);transition:transform .35s cubic-bezier(.2,.9,.3,1.2);z-index:9999;display:flex;align-items:center;gap:8px;max-width:90vw;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:999;display:none;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:1.5rem;max-width:680px;width:100%;max-height:85vh;overflow-y:auto;padding:1.5rem;box-shadow:var(--shadow);}
+.modal h3{color:var(--accent);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;}
+.modal h3 button{background:transparent;border:none;color:var(--text-soft);cursor:pointer;font-size:1.2rem;}
+.disclaimer-text{font-size:.85rem;line-height:1.65;color:var(--text-soft);}
+footer{text-align:center;padding:1.4rem 1rem;font-size:.75rem;color:var(--text-soft);border-top:1px solid var(--border);margin-top:1rem;}
+.kbd{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:.68rem;font-family:monospace;}
+.lang-select{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text-soft);font-size:.8rem;cursor:pointer;outline:none;}
+@media(max-width:600px){h1{font-size:1.15rem}.icon-btn{width:34px;height:34px;font-size:.8rem}.tab{padding:7px 12px;font-size:.75rem}.search-box input{padding:.85rem 1rem;font-size:.9rem}.search-box button{padding:.85rem 1rem}.search-box button span{display:none}.chat-container{height:400px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1><i class="fas fa-capsules"></i> DrugInfo <span class="badge multi">v10 · +WIKIPEDIA</span></h1>
+<div class="actions">
+<select class="lang-select" id="langSelect"><option value="en">🇬🇧 EN</option><option value="ur">🇵🇰 UR</option><option value="ar">🇸🇦 AR</option><option value="hi">🇮🇳 HI</option><option value="es">🇪🇸 ES</option><option value="fr">🇫🇷 FR</option><option value="zh">🇨🇳 ZH</option></select>
+<button class="icon-btn" id="historyBtn" title="History"><i class="fas fa-history"></i></button>
+<button class="icon-btn" id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
+<button class="icon-btn" id="disclaimerBtn" title="Disclaimer"><i class="fas fa-info-circle"></i></button>
+<button class="icon-btn" id="clearCacheBtn" title="Clear cache"><i class="fas fa-trash"></i></button>
+</div>
+</header>
+<div class="tabs" id="tabs">
+<button class="tab active" data-view="search"><i class="fas fa-search"></i> Search</button>
+<button class="tab" data-view="pill"><i class="fas fa-pills"></i> Pill ID</button>
+<button class="tab" data-view="compare"><i class="fas fa-balance-scale"></i> Compare</button>
+<button class="tab" data-view="interactions"><i class="fas fa-exclamation-triangle"></i> Interactions</button>
+<button class="tab" data-view="global"><i class="fas fa-globe"></i> Global</button>
+<button class="tab" data-view="pharmacy"><i class="fas fa-map-marker-alt"></i> Pharmacies</button>
+<button class="tab" data-view="reminders"><i class="fas fa-bell"></i> Reminders</button>
+<button class="tab" data-view="scan"><i class="fas fa-camera"></i> Scan</button>
+<button class="tab" data-view="chat"><i class="fas fa-robot"></i> AI Chat</button>
+<button class="tab" data-view="news"><i class="fas fa-newspaper"></i> News</button>
+</div>
+
+<div class="view active" id="view-search">
+<div class="search-wrap">
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="Search any drug, brand, or trade name..." autocomplete="off">
+<button class="mic-btn" id="micBtn" title="Voice"><i class="fas fa-microphone"></i></button>
+<button id="searchBtn"><i class="fas fa-search"></i> <span>Search</span></button>
+</div>
+<div class="autocomplete" id="autocomplete"></div>
+</div>
+<div class="quick-searches">
+<button data-quick="Tylenol">Tylenol</button><button data-quick="Crocin">Crocin</button>
+<button data-quick="Panadol">Panadol</button><button data-quick="Lipitor">Lipitor</button>
+<button data-quick="Glucophage">Glucophage</button><button data-quick="Zithromax">Zithromax</button>
+<button data-quick="Advil">Advil</button><button data-quick="Prilosec">Prilosec</button>
+</div>
+<div class="mode-bar">
+<button class="mode-btn active" data-mode="all"><i class="fas fa-globe"></i> All</button>
+<button class="mode-btn" data-mode="brand"><i class="fas fa-tag"></i> Brand</button>
+<button class="mode-btn" data-mode="generic"><i class="fas fa-pills"></i> Generic</button>
+<button class="mode-btn" data-mode="manufacturer"><i class="fas fa-industry"></i> Manufacturer</button>
+<span class="mode-info" id="modeInfo">Searching all fields</span>
+</div>
+<div class="source-panel">
+<h4><i class="fas fa-database"></i> 21 Data Sources (parallel) <button id="toggleSources">Hide</button></h4>
+<div class="source-grid" id="sourceGrid">
+<div class="source-item"><span class="dot"></span><span class="name">openFDA Label</span><span class="desc">US Labels</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">openFDA NDC</span><span class="desc">Products</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">FAERS</span><span class="desc">Adverse</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Enforcement</span><span class="desc">Recalls</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Shortages</span><span class="desc">Shortages</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Orange Book</span><span class="desc">Patents</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Drugs@FDA</span><span class="desc">Approvals</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">RxNorm</span><span class="desc">Names</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">RxNorm DDI</span><span class="desc">Interactions</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">PubChem</span><span class="desc">Chemistry</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">PubChem Syn</span><span class="desc">Aliases</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">DailyMed</span><span class="desc">NLM</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">ClinicalTrials</span><span class="desc">Trials</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">MedlinePlus</span><span class="desc">Consumer</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">WHO INN</span><span class="desc">Global</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wikipedia</span><span class="desc">Encyclopedia</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wikidata</span><span class="desc">Structured</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wikimedia Commons</span><span class="desc">Images</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wiktionary</span><span class="desc">Definitions</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">WikiData Claims</span><span class="desc">Properties</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">OpenStreetMap</span><span class="desc">Pharmacies</span></div>
+</div>
+</div>
+<div class="status-bar"><div id="apiStatus">Ready</div></div>
+<div id="resultContainer">
+<div class="empty"><i class="fas fa-search"></i><p><strong>Search any medicine, drug, or brand</strong></p><p style="font-size:.85rem;margin-top:.5rem;">Now with Wikipedia, Wikidata, Wikimedia Commons & Wiktionary</p></div>
+</div>
+</div>
+
+<div class="view" id="view-pill">
+<div class="card">
+<h3><i class="fas fa-pills"></i> Pill Identifier <span class="src-badge">openFDA NDC</span></h3>
+<div class="pill-search-grid">
+<div class="field-group"><label>Imprint</label><input type="text" id="pillImprint" placeholder="L484"></div>
+<div class="field-group"><label>Color</label><select id="pillColor"><option value="">Any</option><option value="white">White</option><option value="yellow">Yellow</option><option value="blue">Blue</option><option value="green">Green</option><option value="red">Red</option><option value="orange">Orange</option><option value="pink">Pink</option></select></div>
+<div class="field-group"><label>Shape</label><select id="pillShape"><option value="">Any</option><option value="round">Round</option><option value="oval">Oval</option><option value="capsule">Capsule</option><option value="rectangle">Rectangle</option></select></div>
+</div>
+<button class="action-btn primary" id="pillSearchBtn"><i class="fas fa-search"></i> Search Pills</button>
+<div id="pillResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-compare">
+<div class="card">
+<h3><i class="fas fa-balance-scale"></i> Compare Drugs <span class="src-badge">Multi-source</span></h3>
+<div class="drug-selector">
+<select class="drug-input" id="compareSelect" style="flex:1;">
+<option value="">— Add a drug —</option>
+<option value="tylenol">Tylenol</option><option value="advil">Advil</option><option value="aspirin">Aspirin</option>
+<option value="lipitor">Lipitor</option><option value="glucophage">Glucophage</option><option value="prilosec">Prilosec</option>
+<option value="zithromax">Zithromax</option><option value="amoxil">Amoxil</option><option value="synthroid">Synthroid</option>
+</select>
+<button class="action-btn" id="compareAddBtn"><i class="fas fa-plus"></i> Add</button>
+<button class="action-btn" id="compareClearBtn"><i class="fas fa-times"></i> Clear</button>
+</div>
+<div class="selected-drugs" id="compareSelected"></div>
+<div id="compareResults"></div>
+</div>
+</div>
+
+<div class="view" id="view-interactions">
+<div class="card">
+<h3><i class="fas fa-exclamation-triangle"></i> Interaction Checker <span class="src-badge">RxNorm</span></h3>
+<div class="drug-selector">
+<input type="text" class="drug-input" id="interactionInput" placeholder="Drug name (Warfarin)">
+<button class="action-btn primary" id="interactionAddBtn"><i class="fas fa-plus"></i> Add</button>
+</div>
+<div class="selected-drugs" id="interactionSelected"></div>
+<button class="action-btn primary" id="checkInteractionsBtn"><i class="fas fa-shield-alt"></i> Check</button>
+<div id="interactionResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-global">
+<div class="card">
+<h3><i class="fas fa-globe"></i> Global Drug Names <span class="src-badge">WHO INN</span></h3>
+<div class="drug-selector">
+<select class="drug-input" id="globalSelect" style="flex:1;">
+<option value="">— Select —</option>
+<option value="paracetamol">Paracetamol</option><option value="ibuprofen">Ibuprofen</option>
+<option value="aspirin">Aspirin</option><option value="metformin">Metformin</option>
+<option value="omeprazole">Omeprazole</option><option value="atorvastatin">Atorvastatin</option>
+<option value="amoxicillin">Amoxicillin</option><option value="azithromycin">Azithromycin</option>
+</select>
+</div>
+<div id="globalResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-pharmacy">
+<div class="card">
+<h3><i class="fas fa-map-marker-alt"></i> Pharmacy Locator <span class="src-badge">OpenStreetMap</span></h3>
+<div class="pharmacy-toolbar">
+<button class="action-btn primary" id="findPharmacyGPS"><i class="fas fa-location-arrow"></i> GPS</button>
+<input type="text" id="pharmacyAddress" placeholder="City (Lahore, London, NYC...)">
+<button class="action-btn" id="findPharmacyAddress"><i class="fas fa-search"></i> Search</button>
+</div>
+<div class="pharmacy-toolbar">
+<select id="pharmacyRadius"><option value="1000">1 km</option><option value="3000" selected>3 km</option><option value="5000">5 km</option><option value="10000">10 km</option></select>
+<select id="pharmacyType"><option value="pharmacy" selected>Pharmacies</option><option value="hospital">Hospitals</option><option value="clinic">Clinics</option><option value="doctors">Doctors</option></select>
+<label style="font-size:.8rem;display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="pharmacyOpenNow"> Open now</label>
+</div>
+<div id="pharmacyResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-reminders">
+<div class="card">
+<h3><i class="fas fa-bell"></i> Medication Reminders</h3>
+<div class="drug-selector" style="flex-direction:column;align-items:stretch;">
+<input type="text" class="drug-input" id="reminderDrug" placeholder="Drug name">
+<input type="time" class="drug-input" id="reminderTime" value="08:00">
+<input type="text" class="drug-input" id="reminderDose" placeholder="Dose">
+<button class="action-btn primary" id="addReminderBtn"><i class="fas fa-plus"></i> Add</button>
+</div>
+<div id="reminderList" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-scan">
+<div class="card">
+<h3><i class="fas fa-camera"></i> Smart Scanner <span class="src-badge">Tesseract + jsQR</span></h3>
+<div class="scan-tabs">
+<button class="scan-tab active" data-scan="camera"><i class="fas fa-video"></i> Camera</button>
+<button class="scan-tab" data-scan="upload"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+<button class="scan-tab" data-scan="barcode"><i class="fas fa-barcode"></i> Barcode</button>
+</div>
+<div id="scan-camera" class="scan-panel">
+<div class="camera-wrap"><video id="cameraVideo" autoplay playsinline muted></video><div class="camera-overlay"><div class="scan-frame"></div></div></div>
+<div class="camera-controls">
+<button id="cameraStartBtn"><i class="fas fa-play"></i> Start</button>
+<button id="cameraCaptureBtn" disabled><i class="fas fa-camera"></i> Capture</button>
+<button id="cameraSwitchBtn" disabled><i class="fas fa-sync-alt"></i> Switch</button>
+<button id="cameraStopBtn" class="danger" disabled><i class="fas fa-stop"></i> Stop</button>
+</div>
+<div id="cameraResult"></div>
+</div>
+<div id="scan-upload" class="scan-panel" style="display:none;">
+<div class="file-drop" id="ocrDrop"><i class="fas fa-cloud-upload-alt"></i><p><strong>Click to upload</strong> or drag & drop</p></div>
+<input type="file" id="ocrFile" accept="image/*" style="display:none;">
+<div id="ocrPreview" style="margin-top:1rem;"></div>
+<div id="ocrResult" style="margin-top:1rem;"></div>
+</div>
+<div id="scan-barcode" class="scan-panel" style="display:none;">
+<div class="drug-selector">
+<input type="text" class="drug-input" id="barcodeInput" placeholder="Barcode (NDC/UPC)">
+<button class="action-btn primary" id="barcodeBtn"><i class="fas fa-search"></i> Search</button>
+<button class="action-btn" id="barcodeScanBtn"><i class="fas fa-camera"></i> Scan</button>
+</div>
+<div class="camera-wrap" id="barcodeCameraWrap" style="display:none;margin-top:1rem;"><video id="barcodeVideo" autoplay playsinline muted></video></div>
+<div id="barcodeResult" style="margin-top:1rem;"></div>
+</div>
+</div>
+</div>
+
+<div class="view" id="view-chat">
+<div class="chat-layout">
+<div class="chat-sidebar">
+<h4><i class="fas fa-bolt"></i> Quick Questions</h4>
+<button data-chatq="What is Tylenol used for?"><i class="fas fa-question-circle"></i> What is Tylenol used for?</button>
+<button data-chatq="Side effects of ibuprofen"><i class="fas fa-exclamation-triangle"></i> Ibuprofen side effects</button>
+<button data-chatq="Tell me about Metformin"><i class="fas fa-info-circle"></i> About Metformin</button>
+<button data-chatq="Is aspirin safe with warfarin?"><i class="fas fa-shield-alt"></i> Aspirin + Warfarin</button>
+<button data-chatq="What are the brands of paracetamol?"><i class="fas fa-tags"></i> Paracetamol brands</button>
+<button data-chatq="Wikipedia about ibuprofen"><i class="fab fa-wikipedia-w"></i> Wikipedia: ibuprofen</button>
+<h4 style="margin-top:1rem;"><i class="fas fa-clock"></i> Recent</h4>
+<div id="chatHistory"></div>
+<button style="margin-top:1rem;background:transparent;border:1px dashed var(--border);" id="clearChatBtn"><i class="fas fa-trash"></i> Clear</button>
+</div>
+<div>
+<div class="card">
+<h3><i class="fas fa-robot"></i> AI Assistant <span class="src-badge">Multi-source + Wikipedia</span></h3>
+<div class="chat-container" id="chatContainer">
+<div class="chat-msg bot">👋 <strong>Hello!</strong> Ask me about any drug.<br><br>Now with Wikipedia!<ul><li>"What is Tylenol used for?"</li><li>"Side effects of ibuprofen"</li><li>"Wikipedia about aspirin"</li></ul><small>⚠️ Not a substitute for medical advice</small></div>
+</div>
+<div class="chat-input-row"><input type="text" id="chatInput" placeholder="Ask a question..."><button id="chatSendBtn"><i class="fas fa-paper-plane"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="view" id="view-news">
+<div class="card">
+<h3><i class="fas fa-newspaper"></i> Drug Recalls & News <span class="src-badge">openFDA</span></h3>
+<button class="action-btn primary" id="loadNewsBtn"><i class="fas fa-sync"></i> Load Latest</button>
+<div id="newsResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<footer>
+<p><i class="fas fa-shield-alt"></i> 21 sources: openFDA · RxNorm · PubChem · DailyMed · Drugs@FDA · FAERS · WHO INN · ClinicalTrials · MedlinePlus · Wikipedia · Wikidata · Wikimedia Commons · Wiktionary · OpenStreetMap</p>
+<p style="margin-top:.3rem;">⚠️ Not medical advice.</p>
+<p style="margin-top:.3rem;">📄 <a href="details.html" style="color:var(--accent);">Full Encyclopedia Page →</a></p>
+<p style="margin-top:.3rem;">Press <span class="kbd">Ctrl</span>+<span class="kbd">K</span> search · <span class="kbd">H</span> history · <span class="kbd">D</span> dark</p>
+<p style="margin-top:.3rem;font-size:.7rem;">Wikipedia content licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" style="color:var(--accent);">CC BY-SA 4.0</a></p>
+</footer>
+</div>
+
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
+
+<div class="modal-overlay" id="settingsModal">
+<div class="modal">
+<h3><span><i class="fas fa-cog"></i> Settings</span><button onclick="document.getElementById('settingsModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<div><label style="font-size:.8rem;color:var(--accent);text-transform:uppercase;font-weight:600;">Theme</label>
+<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+<button class="mode-btn active" data-theme="light">☀️ Light</button>
+<button class="mode-btn" data-theme="dark">🌙 Dark</button>
+<button class="mode-btn" data-theme="sepia">📖 Sepia</button>
+<button class="mode-btn" data-theme="high-contrast">🔲 Contrast</button>
+</div></div>
+<div><label style="font-size:.8rem;color:var(--accent);text-transform:uppercase;font-weight:600;">Reading Mode</label>
+<div style="margin-top:6px;"><button class="mode-btn" id="readingModeBtn"><i class="fas fa-book-open"></i> Toggle</button></div></div>
+<div><label style="font-size:.8rem;color:var(--accent);text-transform:uppercase;font-weight:600;">Units</label>
+<div style="margin-top:6px;"><select class="mode-btn" id="unitSelect" style="padding:6px 12px;"><option value="metric">Metric</option><option value="imperial">Imperial</option></select></div></div>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="historyModal">
+<div class="modal">
+<h3><span><i class="fas fa-history"></i> History</span><button onclick="document.getElementById('historyModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<div id="historyList"></div>
+<button class="action-btn" id="clearHistoryBtn" style="margin-top:1rem;"><i class="fas fa-trash"></i> Clear</button>
+</div>
+</div>
+
+<div class="modal-overlay" id="disclaimerModal">
+<div class="modal">
+<h3><span><i class="fas fa-info-circle"></i> Disclaimer</span><button onclick="document.getElementById('disclaimerModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<div class="disclaimer-text">
+<h4>⚠️ Important</h4>
+<p><strong>This website is for informational purposes only.</strong> NOT a substitute for professional medical advice.</p>
+<p>Always consult your physician or pharmacist before taking any medication.</p>
+<p>If you have a medical emergency, call your local emergency number.</p>
+<h4>📊 Data Sources</h4>
+<p>Primary medical data: openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, ClinicalTrials.gov, MedlinePlus.</p>
+<p>Supplementary encyclopedia: <strong>Wikipedia, Wikidata, Wikimedia Commons, Wiktionary</strong> — licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" style="color:var(--accent);">CC BY-SA 4.0</a> and <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" style="color:var(--accent);">CC0</a>.</p>
+<p><strong>Note:</strong> Wikipedia is a secondary source and may contain inaccuracies. Always verify drug information with a healthcare professional.</p>
+<h4>🔒 Privacy</h4>
+<p>No tracking, no ads. All searches cached locally in your browser.</p>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="qrModal">
+<div class="modal" style="text-align:center;">
+<h3><span><i class="fas fa-qrcode"></i> Share</span><button onclick="document.getElementById('qrModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<canvas id="qrCanvas" style="max-width:100%;"></canvas>
+</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const I18N={en:{search:"Search",ph:"Search any drug..."},ur:{search:"تلاش",ph:"دوا تلاش کریں..."},ar:{search:"بحث",ph:"ابحث..."},hi:{search:"खोजें",ph:"दवा खोजें..."},es:{search:"Buscar",ph:"Buscar..."},fr:{search:"Rechercher",ph:"Rechercher..."},zh:{search:"搜索",ph:"搜索..."}};
+let currentLang=localStorage.getItem('di:lang')||'en';
+function applyLang(l){currentLang=l;localStorage.setItem('di:lang',l);document.documentElement.lang=l;const t=I18N[l]||I18N.en;document.querySelectorAll('#searchBtn span').forEach(s=>s.textContent=t.search);const i=document.getElementById('searchInput');if(i)i.placeholder=t.ph;}
+const state={theme:localStorage.getItem('di:theme')||'light',readingMode:localStorage.getItem('di:reading')==='1',unit:localStorage.getItem('di:unit')||'metric',cache:JSON.parse(localStorage.getItem('di:cache')||'{}'),history:JSON.parse(localStorage.getItem('di:history')||'[]'),reminders:JSON.parse(localStorage.getItem('di:reminders')||'[]'),chatHistory:JSON.parse(localStorage.getItem('di:chatHistory')||'[]'),mode:'all',acIndex:-1,acItems:[],currentData:null,currentQuery:'',compareList:[],interactionList:[],cameraStream:null,cameraFacing:'environment',barcodeStream:null,barcodeScanInterval:null,lastLocation:null};
+const $=id=>document.getElementById(id);
+const dom={input:$('searchInput'),btn:$('searchBtn'),result:$('resultContainer'),autocomplete:$('autocomplete'),apiStatus:$('apiStatus'),modeInfo:$('modeInfo')};
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').toLowerCase().trim();
+function showToast(m,i='fa-check-circle'){const t=$('toast');$('toastMsg').textContent=m;t.querySelector('i').className=`fas ${i}`;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+function applyTheme(t){document.body.classList.remove('dark','sepia','high-contrast');if(t!=='light')document.body.classList.add(t);localStorage.setItem('di:theme',t);state.theme=t;}
+function toggleReadingMode(){state.readingMode=!state.readingMode;document.body.classList.toggle('reading-mode',state.readingMode);localStorage.setItem('di:reading',state.readingMode?'1':'0');showToast(state.readingMode?'Reading ON':'Reading OFF','fa-book-open');}
+const getUnit=()=>state.unit==='imperial'?'mi':'km';
+const convertDist=km=>state.unit==='imperial'?km*0.621371:km;
+function resetSourceDots(){document.querySelectorAll('#sourceGrid .dot').forEach(d=>d.className='dot loading');}
+function markSource(i,ok){const d=document.querySelectorAll('#sourceGrid .dot');if(d[i])d[i].className=ok?'dot':'dot error';}
+function getCache(k){const e=state.cache[k];if(!e)return null;if(Date.now()-e.t>24*60*60*1000){delete state.cache[k];return null;}return e.v;}
+function setCache(k,v){state.cache[k]={v,t:Date.now()};try{localStorage.setItem('di:cache',JSON.stringify(state.cache));}catch(e){const kk=Object.keys(state.cache);if(kk.length>40){kk.sort((a,b)=>state.cache[a].t-state.cache[b].t).slice(0,10).forEach(x=>delete state.cache[x]);try{localStorage.setItem('di:cache',JSON.stringify(state.cache));}catch(_){}}}}
+function addHistory(q){if(!q)return;state.history=state.history.filter(h=>norm(h.q)!==norm(q));state.history.unshift({q,t:Date.now()});state.history=state.history.slice(0,30);localStorage.setItem('di:history',JSON.stringify(state.history));}
+function renderHistory(){const l=$('historyList');if(!state.history.length){l.innerHTML='<p style="color:var(--text-soft);text-align:center;padding:1rem;">No history</p>';return;}l.innerHTML=state.history.map(h=>`<div class="history-item" data-hq="${esc(h.q)}"><span><i class="fas fa-history" style="color:var(--accent);margin-right:8px;"></i>${esc(h.q)}</span><span style="font-size:.72rem;color:var(--text-soft);">${new Date(h.t).toLocaleString()}</span></div>`).join('');l.querySelectorAll('[data-hq]').forEach(el=>el.addEventListener('click',()=>{$('searchInput').value=el.dataset.hq;switchView('search');$('historyModal').classList.remove('show');performSearch(el.dataset.hq);}));}
+
+// ---- API CALLS ----
+async function apiLabel(q,mode){const s=encodeURIComponent(q.replace(/"/g,''));let search;if(mode==='brand')search=`openfda.brand_name:"${q}"`;else if(mode==='generic')search=`openfda.generic_name:"${q}"+openfda.substance_name:"${q}"`;else if(mode==='manufacturer')search=`openfda.manufacturer_name:"${q}"`;else search=`openfda.brand_name:"${q}"+openfda.generic_name:"${q}"+openfda.substance_name:"${q}"+openfda.manufacturer_name:"${q}"`;try{const r=await fetch(`https://api.fda.gov/drug/label.json?search=${encodeURIComponent(search)}&limit=5`);if(!r.ok){const r2=await fetch(`https://api.fda.gov/drug/label.json?search=${s}&limit=3`);if(!r2.ok)return null;return(await r2.json()).results||null;}return(await r.json()).results||null;}catch(e){return null;}}
+async function apiNDC(q){try{const r=await fetch(`https://api.fda.gov/drug/ndc.json?search=brand_name:"${encodeURIComponent(q)}"+generic_name:"${encodeURIComponent(q)}"&limit=15`);if(!r.ok){const r2=await fetch(`https://api.fda.gov/drug/ndc.json?search=${encodeURIComponent(q)}&limit=8`);if(!r2.ok)return null;return(await r2.json()).results||null;}return(await r.json()).results||null;}catch(e){return null;}}
+async function apiFAERS(q){try{const r=await fetch(`https://api.fda.gov/drug/event.json?search=patient.drug.medicinalproduct:"${encodeURIComponent(q)}"&limit=5`);if(!r.ok)return null;return(await r.json()).results||null;}catch(e){return null;}}
+async function apiPubChem(q){try{const r=await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(q)}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,InChIKey,IUPACName,XLogP,TPSA/JSON`);if(!r.ok)return null;const j=await r.json();return j.PropertyTable?.Properties?.[0]||null;}catch(e){return null;}}
+async function apiPubChemSyn(q){try{const r=await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(q)}/synonyms/JSON`);if(!r.ok)return null;const j=await r.json();return(j.InformationList?.Information?.[0]?.Synonym||[]).slice(0,30);}catch(e){return null;}}
+async function apiRxNorm(q){try{const r1=await fetch(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(q)}&search=2`);const j1=await r1.json();const cui=j1.idGroup?.rxnormId?.[0];if(!cui)return null;const r2=await fetch(`https://rxnav.nlm.nih.gov/REST/rxcui/${cui}/allProperties.json?prop=all`);const j2=await r2.json();const r3=await fetch(`https://rxnav.nlm.nih.gov/REST/rxcui/${cui}/allrelated.json`);const j3=await r3.json();return{rxcui:cui,properties:j2.propConceptGroup,related:j3.allRelatedGroup};}catch(e){return null;}}
+async function apiRxNormInt(q){try{const r=await fetch(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(q)}`);const j=await r.json();const cui=j.idGroup?.rxnormId?.[0];if(!cui)return null;const r2=await fetch(`https://rxnav.nlm.nih.gov/REST/interaction/interaction.json?rxcui=${cui}`);const j2=await r2.json();return j2.interactionTypeGroup?.[0]?.interactionType?.[0]?.interactionPair||null;}catch(e){return null;}}
+async function apiDrugsFDA(q){try{const r=await fetch(`https://api.fda.gov/drug/drugsfda.json?search=openfda.brand_name:"${encodeURIComponent(q)}"+openfda.generic_name:"${encodeURIComponent(q)}"&limit=3`);if(!r.ok)return null;return(await r.json()).results||null;}catch(e){return null;}}
+async function apiShortages(q){try{const r=await fetch(`https://api.fda.gov/drug/shortages.json?search=openfda.generic_name:"${encodeURIComponent(q)}"&limit=5`);if(!r.ok)return null;return(await r.json()).results||null;}catch(e){return null;}}
+async function apiOrangeBook(q){try{const r=await fetch(`https://api.fda.gov/drug/orangebook.json?search=openfda.brand_name:"${encodeURIComponent(q)}"+openfda.generic_name:"${encodeURIComponent(q)}"&limit=3`);if(!r.ok)return null;return(await r.json()).results||null;}catch(e){return null;}}
+async function apiDailyMed(q){try{const r=await fetch(`https://dailymed.nlm.nih.gov/dailymed/services/v2/drugnames.json?drug_name=${encodeURIComponent(q)}`);if(!r.ok)return null;const j=await r.json();return j.data||null;}catch(e){return null;}}
+async function apiClinicalTrials(q){try{const r=await fetch(`https://clinicaltrials.gov/api/v2/studies?query.term=${encodeURIComponent(q)}&pageSize=5&format=json`);if(!r.ok)return null;const j=await r.json();return j.studies||null;}catch(e){return null;}}
+async function apiMedlinePlus(q){try{const r=await fetch(`https://connect.medlineplus.gov/service?mainSearchCriteria.v.cs=2.16.840.1.113883.6.69&mainSearchCriteria.v.dn=${encodeURIComponent(q)}&knowledgeResponseType=application/json&informationRecipient.languageCode.c=en`);if(!r.ok)return null;const j=await r.json();return j.feed?.entry||null;}catch(e){return null;}}
+async function apiEnforcement(q){try{const r=await fetch(`https://api.fda.gov/drug/enforcement.json?search=openfda.brand_name:"${encodeURIComponent(q)}"+openfda.generic_name:"${encodeURIComponent(q)}"&limit=5`);if(!r.ok)return null;return(await r.json()).results||null;}catch(e){return null;}}
+
+// ---- WIKIPEDIA FAMILY ----
+async function apiWikipedia(q){try{
+const r=await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts|pageimages|info&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=400&inprop=url&titles=${encodeURIComponent(q)}&redirects=1`);
+if(!r.ok)return null;const j=await r.json();const pages=j.query?.pages;if(!pages)return null;const p=Object.values(pages)[0];if(!p||p.missing!==undefined)return null;
+return{title:p.title,extract:p.extract||'',url:p.fullurl||`https://en.wikipedia.org/wiki/${encodeURIComponent(p.title)}`,thumbnail:p.thumbnail?.source||null,pageid:p.pageid};
+}catch(e){return null;}}
+async function apiWikidata(q){try{
+// First search Wikidata for the entity
+const sr=await fetch(`https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&origin=*&language=en&limit=3&search=${encodeURIComponent(q)}`);
+if(!sr.ok)return null;const sj=await sr.json();const hit=sj.search?.[0];if(!hit)return null;
+// Fetch entity data
+const er=await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${hit.id}.json`);
+if(!er.ok)return null;const ej=await er.json();const e=ej.entities?.[hit.id];if(!e)return null;
+const claims=e.claims||{};const labels=e.labels||{};const descs=e.descriptions||{};
+return{qid:hit.id,label:labels.en?.value||hit.label,description:descs.en?.value||hit.description,claims,url:`https://www.wikidata.org/wiki/${hit.id}`};
+}catch(e){return null;}}
+async function apiWikimediaCommons(q){try{
+const r=await fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=6&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=300`);
+if(!r.ok)return null;const j=await r.json();const pages=j.query?.pages;if(!pages)return null;
+return Object.values(pages).map(p=>({title:p.title,url:p.imageinfo?.[0]?.thumburl||p.imageinfo?.[0]?.url,description:p.imageinfo?.[0]?.extmetadata?.ImageDescription?.value||'',artist:p.imageinfo?.[0]?.extmetadata?.Artist?.value||''})).filter(x=>x.url);
+}catch(e){return null;}}
+async function apiWiktionary(q){try{
+const r=await fetch(`https://en.wiktionary.org/w/api.php?action=query&format=json&origin=*&prop=extracts&exintro=1&explaintext=1&titles=${encodeURIComponent(q)}&redirects=1`);
+if(!r.ok)return null;const j=await r.json();const pages=j.query?.pages;if(!pages)return null;const p=Object.values(pages)[0];if(!p||p.missing!==undefined)return null;
+return{title:p.title,extract:(p.extract||'').slice(0,600),url:`https://en.wiktionary.org/wiki/${encodeURIComponent(p.title)}`};
+}catch(e){return null;}}
+
+async function fetchAllData(q,mode){
+const key=`q:${norm(q)}|${mode}`;const c=getCache(key);if(c){dom.apiStatus.innerHTML='<span style="color:var(--success);"><i class="fas fa-bolt"></i> Cache hit</span>';return c;}
+resetSourceDots();
+const p=[apiLabel(q,mode),apiNDC(q),apiFAERS(q),apiEnforcement(q),apiShortages(q),apiOrangeBook(q),apiDrugsFDA(q),apiRxNorm(q),apiRxNormInt(q),apiPubChem(q),apiPubChemSyn(q),apiDailyMed(q),apiClinicalTrials(q),apiMedlinePlus(q),apiWikipedia(q),apiWikidata(q),apiWikimediaCommons(q),apiWiktionary(q)];
+const r=await Promise.all(p.map((pr,i)=>pr.then(v=>{markSource(i,!!v);return v;}).catch(()=>{markSource(i,false);return null;})));
+markSource(18,true);markSource(19,true);markSource(20,true);
+const[label,ndc,adverse,enforcement,shortages,orangebook,drugsfda,rxnorm,rxnormInt,pubchem,synonyms,dailymed,trials,medlineplus,wikipedia,wikidata,commons,wiktionary]=r;
+const out={label,ndc,adverse,enforcement,shortages,orangebook,drugsfda,rxnorm,rxnormInt,pubchem,synonyms,dailymed,trials,medlineplus,wikipedia,wikidata,commons,wiktionary,query:q,mode};
+setCache(key,out);return out;
+}
+function collectBrands(d){const b=new Map(),g=new Set(),m=new Set();
+(d.label||[]).forEach(l=>{const o=l.openfda||{};(o.brand_name||[]).forEach(x=>{if(!b.has(x))b.set(x,{name:x,source:'FDA Label',generic:(o.generic_name||[])[0]});});(o.generic_name||[]).forEach(x=>g.add(x));(o.manufacturer_name||[]).forEach(x=>m.add(x));});
+(d.ndc||[]).forEach(n=>{if(n.brand_name){if(!b.has(n.brand_name))b.set(n.brand_name,{name:n.brand_name,source:'NDC',generic:n.generic_name,manufacturer:n.labeler_name,dosage:n.dosage_form});}if(n.generic_name)g.add(n.generic_name);if(n.labeler_name)m.add(n.labeler_name);});
+if(d.rxnorm?.properties?.propConcept){d.rxnorm.properties.propConcept.forEach(p=>{if(p.propName==='BRAND_NAME'&&p.propValue&&!b.has(p.propValue))b.set(p.propValue,{name:p.propValue,source:'RxNorm'});if((p.propName==='GENERIC_NAME'||p.propName==='INGREDIENT_NAME')&&p.propValue)g.add(p.propValue);});}
+if(d.rxnorm?.related?.conceptGroup){d.rxnorm.related.conceptGroup.forEach(gr=>(gr.conceptProperties||[]).forEach(cp=>{if(cp.name)g.add(cp.name);}));}
+// Add Wikipedia aliases as synonyms
+if(d.wikipedia?.title)g.add(d.wikipedia.title);
+return{brands:Array.from(b.values()),generics:Array.from(g),manufacturers:Array.from(m)};}
+
+function renderResult(d){
+const{label,ndc,adverse,enforcement,shortages,orangebook,drugsfda,pubchem,synonyms,dailymed,trials,medlineplus,wikipedia,wikidata,commons,query}=d;
+if(!label&&!ndc&&!adverse&&!pubchem&&!drugsfda&&!wikipedia){dom.result.innerHTML=`<div class="empty"><i class="fas fa-search-minus"></i><p>No results for "<strong>${esc(query)}</strong>"</p></div>`;return;}
+const c=collectBrands(d);const l=label?.[0];const o=l?.openfda||{};
+const primary=o.brand_name?.[0]||o.generic_name?.[0]||ndc?.[0]?.brand_name||wikipedia?.title||query;
+const boxed=l?.boxed_warning?.[0];const warnB=boxed?`<div class="danger-note"><i class="fas fa-exclamation-triangle"></i><div><strong>BOXED WARNING:</strong> ${esc(boxed.slice(0,300))}…</div></div>`:'';
+let shortB='';if(shortages?.length)shortB=`<div class="warn-note"><i class="fas fa-exclamation-circle"></i><div><strong>SHORTAGE:</strong> ${shortages.length} report(s)</div></div>`;
+let recB='';if(enforcement?.length)recB=`<div class="warn-note"><i class="fas fa-bullhorn"></i><div><strong>RECALL:</strong> ${enforcement.length} on record</div></div>`;
+const infoN=c.brands.length?`<div class="info-note"><i class="fas fa-tags"></i><div><strong>${c.brands.length} brands</strong> · ${c.manufacturers.length} manufacturers${wikipedia?` · Wikipedia available`:''}</div></div>`:'';
+const summary=`<div class="summary-bar">
+<div class="summary-stat"><div class="num">${c.brands.length}</div><div class="lbl">Brands</div></div>
+<div class="summary-stat"><div class="num">${c.generics.length}</div><div class="lbl">Generics</div></div>
+<div class="summary-stat"><div class="num">${c.manufacturers.length}</div><div class="lbl">Makers</div></div>
+<div class="summary-stat"><div class="num">${ndc?.length||0}</div><div class="lbl">NDC</div></div>
+<div class="summary-stat"><div class="num">${adverse?.length||0}</div><div class="lbl">FAERS</div></div>
+<div class="summary-stat"><div class="num">${trials?.length||0}</div><div class="lbl">Trials</div></div>
+<div class="summary-stat"><div class="num">${commons?.length||0}</div><div class="lbl">Images</div></div>
+</div>`;
+const ident=`<div class="card"><h3><i class="fas fa-id-card"></i> Identity <span class="src-badge">openFDA</span></h3>
+<div class="detail"><strong>Primary Name</strong><span style="font-size:1.15rem;font-weight:600;color:var(--accent);">${esc(primary)}</span></div>
+${c.generics.length?`<div class="detail"><strong>Generics</strong><div class="pill-list">${c.generics.slice(0,10).map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div></div>`:''}
+${c.manufacturers.length?`<div class="detail"><strong>Manufacturers</strong><div class="pill-list">${c.manufacturers.slice(0,8).map(x=>`<span class="pill manufacturer">${esc(x)}</span>`).join('')}</div></div>`:''}
+${o.route?.length?`<div class="detail"><strong>Routes</strong><div class="pill-list">${o.route.slice(0,6).map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div></div>`:''}
+</div>`;
+const brands=`<div class="card"><h3><i class="fas fa-tags"></i> Brands (${c.brands.length}) <span class="src-badge">FDA + NDC</span></h3>
+${c.brands.length?`<div class="pill-list" style="gap:8px;">${c.brands.slice(0,15).map(b=>`<span class="pill brand">${esc(b.name)}</span>`).join('')}</div>`:'<p style="color:var(--text-soft);">None found</p>'}
+</div>`;
+
+// Wikipedia card (primary display in search results)
+let wikiCard='';
+if(wikipedia){
+wikiCard=`<div class="card wiki-card"><h3><i class="fab fa-wikipedia-w"></i> Wikipedia Summary <span class="src-badge">CC BY-SA 4.0</span></h3>
+${wikipedia.thumbnail?`<img src="${esc(wikipedia.thumbnail)}" class="wiki-img" alt="${esc(wikipedia.title)}" loading="lazy">`:''}
+<p style="font-size:.88rem;line-height:1.65;">${esc(wikipedia.extract.slice(0,500))}${wikipedia.extract.length>500?'…':''}</p>
+<p style="margin-top:.6rem;font-size:.8rem;"><a href="${esc(wikipedia.url)}" target="_blank" rel="noopener" style="color:var(--wiki);font-weight:600;">Read full article on Wikipedia →</a></p>
+<p style="margin-top:.4rem;font-size:.68rem;color:var(--text-soft);">Content from Wikipedia, licensed under CC BY-SA 4.0</p>
+</div>`;
+}
+
+const uses=l?.indications_and_usage?.[0]||l?.purpose?.[0];
+const usesC=uses?`<div class="card"><h3><i class="fas fa-notes-medical"></i> Uses <span class="src-badge">openFDA</span></h3><p style="font-size:.9rem;line-height:1.6;">${esc(uses.slice(0,600))}…</p></div>`:'';
+
+// Commons image gallery (small)
+let galleryC='';
+if(commons?.length){
+galleryC=`<div class="card full"><h3><i class="fas fa-images"></i> Wikimedia Commons <span class="src-badge">CC / Public Domain</span></h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;">
+${commons.slice(0,6).map(im=>`<a href="${esc(im.url)}" target="_blank" rel="noopener" style="display:block;"><img src="${esc(im.url)}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border);" alt="${esc(im.title)}" loading="lazy"></a>`).join('')}
+</div>
+<p style="margin-top:.6rem;font-size:.7rem;color:var(--text-soft);">Images from Wikimedia Commons. Individual licenses apply.</p>
+</div>`;
+}
+
+const actRow=`<div class="action-row">
+<a href="details.html?drug=${encodeURIComponent(query)}" class="action-btn details-link" target="_blank"><i class="fas fa-book-open"></i> Full Encyclopedia</a>
+${wikipedia?`<a href="${esc(wikipedia.url)}" target="_blank" rel="noopener" class="action-btn wiki-link"><i class="fab fa-wikipedia-w"></i> Wikipedia</a>`:''}
+${wikidata?`<a href="${esc(wikidata.url)}" target="_blank" rel="noopener" class="action-btn wiki-link"><i class="fas fa-database"></i> Wikidata</a>`:''}
+<button class="action-btn" data-action="share"><i class="fas fa-share-alt"></i> Share</button>
+<button class="action-btn" data-action="copy"><i class="fas fa-copy"></i> Copy</button>
+<button class="action-btn" data-action="qr"><i class="fas fa-qrcode"></i> QR</button>
+<button class="action-btn" data-action="compare"><i class="fas fa-balance-scale"></i> Compare</button>
+<button class="action-btn" data-action="askai"><i class="fas fa-robot"></i> Ask AI</button>
+</div>`;
+dom.result.innerHTML=`${warnB}${shortB}${recB}${infoN}${actRow}${summary}<div class="cards">${ident}${brands}${wikiCard}${usesC}${galleryC}</div>
+<div class="cache-note"><i class="fas fa-bolt" style="color:var(--success);"></i> Multi-source data · Wikipedia as secondary reference</div>`;
+dom.result.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>handleAction(b.dataset.action,{query,primary,c})));
+state.currentData={c,query};
+}
+async function handleAction(a,ctx){
+const{query,primary,c}=ctx;
+if(a==='share'){const url=location.origin+location.pathname.replace('index.html','')+'details.html?drug='+encodeURIComponent(query);if(navigator.share){try{await navigator.share({title:primary,text:'Drug: '+primary,url});}catch(e){}}else{navigator.clipboard.writeText(url);showToast('Link copied');}}
+else if(a==='copy'){const t=`DRUG: ${primary}\n\nGenerics: ${c.generics.slice(0,3).join(', ')}\nBrands: ${c.brands.slice(0,10).map(b=>b.name).join(', ')}\n\nSource: DrugInfo Live`;navigator.clipboard.writeText(t);showToast('Copied');}
+else if(a==='qr'){const c2=$('qrCanvas');const url=location.origin+location.pathname.replace('index.html','')+'details.html?drug='+encodeURIComponent(query);QRCode.toCanvas(c2,url,{width:240,margin:2},()=>{});$('qrModal').classList.add('show');}
+else if(a==='compare'){switchView('compare');if(!state.compareList.includes(query)){state.compareList.push(query);renderCompare();showToast('Added');}}
+else if(a==='askai'){switchView('chat');setTimeout(()=>{$('chatInput').value=`Tell me about ${primary}`;sendChat();},300);}
+}
+async function performSearch(q){if(!q||!q.trim())return;q=q.trim();state.currentQuery=q;addHistory(q);dom.btn.disabled=true;dom.btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> <span>...</span>';dom.apiStatus.innerHTML='<i class="fas fa-circle-notch fa-spin"></i> Querying 21 sources...';dom.result.innerHTML='<div class="spinner"></div>';dom.autocomplete.classList.remove('show');
+try{const d=await fetchAllData(q,state.mode);renderResult(d);const bc=state.currentData?.c?.brands?.length||0;dom.apiStatus.innerHTML=`<span style="color:var(--success);"><i class="fas fa-check-circle"></i> ${bc} brands${d.wikipedia?' + Wikipedia':''}</span>`;}
+catch(e){dom.result.innerHTML='<div class="error-box">Error. Try again.</div>';}
+finally{dom.btn.disabled=false;dom.btn.innerHTML='<i class="fas fa-search"></i> <span>Search</span>';}}
+const AC=new Map();
+async function fetchAC(q){const k=norm(q);if(k.length<2)return[];if(AC.has(k))return AC.get(k);try{const r=await fetch(`https://api.fda.gov/drug/ndc.json?search=brand_name:"${encodeURIComponent(k)}"+generic_name:"${encodeURIComponent(k)}"&limit=10`);if(!r.ok)return[];const j=await r.json();const items=[],s=new Set();(j.results||[]).forEach(n=>{if(n.brand_name&&!s.has(norm(n.brand_name))){s.add(norm(n.brand_name));items.push({name:n.brand_name,type:'brand'});}if(n.generic_name&&!s.has(norm(n.generic_name))){s.add(norm(n.generic_name));items.push({name:n.generic_name,type:'generic'});}});AC.set(k,items.slice(0,10));return items.slice(0,10);}catch(e){return[];}}
+function renderAC(items,q){if(!items.length){dom.autocomplete.classList.remove('show');return;}state.acItems=items;state.acIndex=-1;const nq=norm(q);dom.autocomplete.innerHTML=items.map((it,i)=>{const n=it.name;const idx=norm(n).indexOf(nq);let d=esc(n);if(idx>-1){let c=0,oi=-1;for(let k=0;k<n.length;k++)if(/[a-z0-9]/.test(n[k].toLowerCase())){if(c===idx){oi=k;break;}c++;}if(oi>-1)d=esc(n.slice(0,oi))+'<mark>'+esc(n.slice(oi,oi+nq.length))+'</mark>'+esc(n.slice(oi+nq.length));}return`<div class="ac-item" data-idx="${i}"><span class="ac-name">${d}</span><span class="ac-type ${it.type}">${it.type}</span></div>`;}).join('');dom.autocomplete.classList.add('show');}
+function switchView(v){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));const el=$('view-'+v);if(el)el.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
+
+// Sub-tools
+async function searchPills(){const i=$('pillImprint').value.trim(),co=$('pillColor').value,sh=$('pillShape').value,r=$('pillResults');if(!i&&!co&&!sh){r.innerHTML='<div class="error-box">Enter at least one field</div>';return;}r.innerHTML='<div class="spinner"></div>';const q=i||(co+' '+sh);try{const resp=await fetch(`https://api.fda.gov/drug/ndc.json?search=${encodeURIComponent(q)}&limit=10`);if(!resp.ok)throw 0;const j=await resp.json();const items=(j.results||[]);if(!items.length){r.innerHTML='<div class="empty"><i class="fas fa-pills"></i><p>No pills found</p></div>';return;}r.innerHTML=items.map(n=>`<div class="pill-result"><div class="pill-img"><i class="fas fa-pills"></i></div><div style="flex:1;"><div style="font-weight:600;color:var(--accent);">${esc(n.brand_name||n.generic_name||'Unknown')}</div><div style="font-size:.82rem;color:var(--text-soft);">${n.dosage_form?esc(n.dosage_form):''}</div></div><button class="action-btn" data-pq="${esc(n.brand_name||n.generic_name||'')}">Details</button></div>`).join('');r.querySelectorAll('[data-pq]').forEach(b=>b.addEventListener('click',()=>{$('searchInput').value=b.dataset.pq;switchView('search');performSearch(b.dataset.pq);}));}catch(e){r.innerHTML='<div class="error-box">Failed</div>';}}
+function renderCompare(){const s=$('compareSelected');s.innerHTML=state.compareList.map(d=>`<span class="drug-chip">${esc(d)} <button data-rc="${esc(d)}"><i class="fas fa-times"></i></button></span>`).join('');s.querySelectorAll('[data-rc]').forEach(b=>b.addEventListener('click',()=>{state.compareList=state.compareList.filter(x=>x!==b.dataset.rc);renderCompare();}));const r=$('compareResults');if(state.compareList.length<2){r.innerHTML='<p style="color:var(--text-soft);text-align:center;padding:1rem;">Add at least 2 drugs</p>';return;}r.innerHTML='<div class="spinner"></div>';Promise.all(state.compareList.map(q=>fetchAllData(q,'all').catch(()=>null))).then(dl=>{const rows=[{l:'Query',f:d=>d.query},{l:'Generics',f:d=>collectBrands(d).generics.slice(0,3).join(', ')||'—'},{l:'Top Brands',f:d=>collectBrands(d).brands.slice(0,5).map(b=>b.name).join(', ')||'—'},{l:'Makers',f:d=>collectBrands(d).manufacturers.slice(0,3).join(', ')||'—'},{l:'Formula',f:d=>d.pubchem?.MolecularFormula||'—'},{l:'Wikipedia',f:d=>d.wikipedia?.title||'—'},{l:'Wikidata',f:d=>d.wikidata?.qid||'—'}];r.innerHTML=`<table class="compare-table"><thead><tr><th>Field</th>${dl.map(d=>`<th>${esc(d?.query||'—')}</th>`).join('')}</tr></thead><tbody>${rows.map(rw=>{const vs=dl.map(d=>d?rw.f(d):'—');const same=vs.every(v=>v===vs[0]);return`<tr><td><strong>${rw.l}</strong></td>${vs.map(v=>`<td class="${!same?'diff':''}">${esc(v)}</td>`).join('')}</tr>`;}).join('')}</tbody></table>`;});}
+async function checkInteractions(){const r=$('interactionResults');if(state.interactionList.length<2){r.innerHTML='<div class="error-box">Add 2+ drugs</div>';return;}r.innerHTML='<div class="spinner"></div>';try{const cu=await Promise.all(state.interactionList.map(async d=>{const x=await fetch(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(d)}`);const j=await x.json();return{n:d,cui:j.idGroup?.rxnormId?.[0]};}));const v=cu.filter(x=>x.cui);if(v.length<2){r.innerHTML='<div class="error-box">Could not resolve names</div>';return;}const resp=await fetch(`https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis=${v.map(x=>x.cui).join('+')}`);const j=await resp.json();const g=j.fullInteractionTypeGroup||[];if(!g.length){r.innerHTML='<div class="interaction-result low"><i class="fas fa-check-circle"></i> No known interactions</div>';return;}let h='';g.forEach(gr=>(gr.fullInteractionType||[]).forEach(it=>(it.interactionPair||[]).forEach(p=>{const s=(p.severity||'moderate').toLowerCase();const c=s.includes('high')?'high':s.includes('low')?'low':'moderate';h+=`<div class="interaction-result ${c}"><strong>⚠️ ${esc(p.description||'')}</strong><div style="font-size:.75rem;margin-top:4px;">Severity: <strong>${esc(p.severity||'N/A')}</strong> · RxNorm</div></div>`;})));r.innerHTML=h;}catch(e){r.innerHTML='<div class="error-box">Failed</div>';}}
+const GN={paracetamol:[{f:'🇺🇸',c:'USA',n:'Acetaminophen (Tylenol)'},{f:'🇬🇧',c:'UK',n:'Paracetamol (Panadol)'},{f:'🇮🇳',c:'India',n:'Paracetamol (Crocin, Dolo 650)'},{f:'🇵🇰',c:'Pakistan',n:'Paracetamol (Disprol)'},{f:'🇩🇪',c:'Germany',n:'Paracetamol (Ben-u-ron)'},{f:'🇫🇷',c:'France',n:'Paracétamol (Doliprane)'}],ibuprofen:[{f:'🇺🇸',c:'USA',n:'Ibuprofen (Advil, Motrin)'},{f:'🇬🇧',c:'UK',n:'Ibuprofen (Nurofen)'},{f:'🇮🇳',c:'India',n:'Ibuprofen (Brufen)'},{f:'🇵🇰',c:'Pakistan',n:'Ibuprofen (Brufen)'}],aspirin:[{f:'🇺🇸',c:'USA',n:'Aspirin (Bayer, Ecotrin)'},{f:'🇬🇧',c:'UK',n:'Aspirin (Disprin)'},{f:'🇮🇳',c:'India',n:'Aspirin (Disprin, Ecosprin)'},{f:'🇵🇰',c:'Pakistan',n:'Aspirin (Disprin)'}],metformin:[{f:'🇺🇸',c:'USA',n:'Metformin (Glucophage)'},{f:'🇬🇧',c:'UK',n:'Metformin (Glucophage)'},{f:'🇮🇳',c:'India',n:'Metformin (Glycomet)'}],omeprazole:[{f:'🇺🇸',c:'USA',n:'Omeprazole (Prilosec)'},{f:'🇬🇧',c:'UK',n:'Omeprazole (Losec)'},{f:'🇮🇳',c:'India',n:'Omeprazole (Omez)'}],atorvastatin:[{f:'🇺🇸',c:'USA',n:'Atorvastatin (Lipitor)'},{f:'🇬🇧',c:'UK',n:'Atorvastatin (Lipitor)'},{f:'🇮🇳',c:'India',n:'Atorvastatin (Atorva)'}],amoxicillin:[{f:'🇺🇸',c:'USA',n:'Amoxicillin (Amoxil)'},{f:'🇬🇧',c:'UK',n:'Amoxicillin (Amoxil)'},{f:'🇮🇳',c:'India',n:'Amoxicillin (Mox)'}],azithromycin:[{f:'🇺🇸',c:'USA',n:'Azithromycin (Zithromax, Z-Pak)'},{f:'🇬🇧',c:'UK',n:'Azithromycin (Zithromax)'},{f:'🇮🇳',c:'India',n:'Azithromycin (Azee)'}]};
+function renderGlobal(){const k=$('globalSelect').value;const r=$('globalResults');if(!k){r.innerHTML='';return;}const l=GN[k]||[];r.innerHTML=l.map(x=>`<div class="country-row"><span class="country-flag">${x.f}</span><strong style="min-width:120px;color:var(--accent);">${esc(x.c)}</strong><span style="color:var(--text-soft);">${esc(x.n)}</span></div>`).join('');}
+async function findPharmacyGPS(){if(!navigator.geolocation){showToast('GPS not supported','fa-times');return;}const r=$('pharmacyResults');r.innerHTML='<div class="spinner"></div>';navigator.geolocation.getCurrentPosition(p=>{state.lastLocation={lat:p.coords.latitude,lon:p.coords.longitude};searchPharmacies(p.coords.latitude,p.coords.longitude,'Your location');},e=>{r.innerHTML=`<div class="error-box">GPS error: ${esc(e.message)}</div>`;},{enableHighAccuracy:true,timeout:15000});}
+async function findPharmacyAddress(){const a=$('pharmacyAddress').value.trim();if(!a){showToast('Enter city','fa-map-marker-alt');return;}const r=$('pharmacyResults');r.innerHTML='<div class="spinner"></div>';try{const resp=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a)}&format=json&limit=1`,{headers:{'Accept':'application/json'}});const j=await resp.json();if(!j.length){r.innerHTML='<div class="error-box">Not found</div>';return;}const{lat,lon,display_name}=j[0];state.lastLocation={lat:+lat,lon:+lon};searchPharmacies(+lat,+lon,display_name.split(',')[0]);}catch(e){r.innerHTML='<div class="error-box">Failed</div>';}}
+async function searchPharmacies(lat,lon,label){const r=$('pharmacyResults');const radius=+$('pharmacyRadius').value;const type=$('pharmacyType').value;const q=`[out:json][timeout:25];(node["amenity"="${type}"](around:${radius},${lat},${lon});way["amenity"="${type}"](around:${radius},${lat},${lon}););out center 30;`;try{const resp=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});const j=await resp.json();let nodes=j.elements||[];if(!nodes.length){r.innerHTML=`<div class="info-note">No ${esc(type)} found</div>`;return;}nodes=nodes.map(n=>{const la=n.lat||n.center?.lat,lo=n.lon||n.center?.lon;return{...n,lat:la,lon:lo,dist:hav(la,lo,lat,lon)};}).filter(n=>n.lat).sort((a,b)=>a.dist-b.dist);r.innerHTML=`<div class="info-note">Found <strong>${nodes.length}</strong> ${esc(type)} near <strong>${esc(label)}</strong></div>${nodes.slice(0,15).map(n=>{const t=n.tags||{};const nm=t.name||t['name:en']||'Unnamed';const d=convertDist(n.dist);const u=getUnit();const addr=[t['addr:housenumber'],t['addr:street'],t['addr:city'],t['addr:country']].filter(Boolean).join(', ')||'Not listed';const ph=t.phone||t['contact:phone']||'';const map=`https://www.openstreetmap.org/?mlat=${n.lat}&mlon=${n.lon}#map=18/${n.lat}/${n.lon}`;const route=`https://www.openstreetmap.org/directions?from=${lat},${lon}&to=${n.lat},${n.lon}`;return`<div class="pharmacy-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;"><div style="flex:1;min-width:200px;"><strong><i class="fas fa-prescription-bottle"></i> ${esc(nm)}</strong><div style="font-size:.82rem;color:var(--text-soft);margin-top:4px;">${esc(addr)}</div>${ph?`<div style="font-size:.82rem;"><i class="fas fa-phone"></i> ${esc(ph)}</div>`:''}</div><div class="distance"><i class="fas fa-route"></i> ${d.toFixed(2)} ${u}</div></div><div class="pharmacy-actions"><a href="${map}" target="_blank" class="action-btn"><i class="fas fa-map"></i> Map</a><a href="${route}" target="_blank" class="action-btn"><i class="fas fa-directions"></i> Route</a></div></div>`;}).join('')}`;}catch(e){r.innerHTML='<div class="error-box">Failed</div>';}}
+function hav(lat1,lon1,lat2,lon2){const R=6371;const dLat=(lat2-lat1)*Math.PI/180;const dLon=(lon2-lon1)*Math.PI/180;const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function renderReminders(){const l=$('reminderList');if(!state.reminders.length){l.innerHTML='<p style="color:var(--text-soft);text-align:center;padding:1rem;">No reminders</p>';return;}l.innerHTML=state.reminders.map((r,i)=>`<div class="reminder-card"><div><strong style="color:var(--accent);"><i class="fas fa-pills"></i> ${esc(r.drug)}</strong><small style="display:block;color:var(--text-soft);">⏰ ${esc(r.time)} · ${esc(r.dose||'—')}</small></div><div class="reminder-actions"><button data-rt="${i}"><i class="fas fa-bell"></i></button><button data-rd="${i}"><i class="fas fa-trash"></i></button></div></div>`).join('');l.querySelectorAll('[data-rd]').forEach(b=>b.addEventListener('click',()=>{state.reminders.splice(+b.dataset.rd,1);saveReminders();}));l.querySelectorAll('[data-rt]').forEach(b=>b.addEventListener('click',()=>{const r=state.reminders[+b.dataset.rt];if(Notification.permission==='granted')new Notification('💊',{body:`Take ${r.drug}`});else Notification.requestPermission();}));}
+function saveReminders(){localStorage.setItem('di:reminders',JSON.stringify(state.reminders));renderReminders();}
+function addReminder(){const d=$('reminderDrug').value.trim(),t=$('reminderTime').value,ds=$('reminderDose').value.trim();if(!d||!t){showToast('Enter drug and time','fa-exclamation');return;}state.reminders.push({drug:d,time:t,dose:ds});saveReminders();$('reminderDrug').value='';$('reminderDose').value='';showToast('Added','fa-bell');}
+async function startCamera(){try{if(state.cameraStream)stopCamera();state.cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:state.cameraFacing,width:{ideal:1280}}});$('cameraVideo').srcObject=state.cameraStream;$('cameraStartBtn').disabled=true;$('cameraCaptureBtn').disabled=false;$('cameraSwitchBtn').disabled=false;$('cameraStopBtn').disabled=false;showToast('Camera started','fa-video');}catch(e){$('cameraResult').innerHTML=`<div class="error-box">Camera error: ${esc(e.message)}</div>`;}}
+function stopCamera(){if(state.cameraStream){state.cameraStream.getTracks().forEach(t=>t.stop());state.cameraStream=null;}const v=$('cameraVideo');if(v)v.srcObject=null;$('cameraStartBtn').disabled=false;$('cameraCaptureBtn').disabled=true;$('cameraSwitchBtn').disabled=true;$('cameraStopBtn').disabled=true;}
+function switchCamera(){state.cameraFacing=state.cameraFacing==='environment'?'user':'environment';if(state.cameraStream)startCamera();}
+async function captureFromCamera(){const v=$('cameraVideo');if(!v.videoWidth){showToast('Not ready','fa-times');return;}const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);runOCR(c.toDataURL('image/jpeg',0.9),'cameraResult');}
+async function runOCR(src,id){const c=$(id);c.innerHTML=`<div class="live-result"><img src="${src}" class="ocr-preview"><div class="progress-bar"><div id="op" style="width:0%"></div></div><p style="text-align:center;font-size:.85rem;" id="ost">OCR...</p></div>`;try{const{data:{text}}=await Tesseract.recognize(src,'eng',{logger:m=>{if(m.status==='recognizing text'){const p=Math.round(m.progress*100);const pb=$('op');if(pb)pb.style.width=p+'%';const st=$('ost');if(st)st.textContent=`${p}%`;}}});const clean=text.replace(/\s+/g,' ').trim();const words=clean.split(/[^A-Za-z0-9]+/).filter(w=>w.length>3);const cand=[...new Set(words)].slice(0,10);c.innerHTML=`<div class="live-result"><img src="${src}" class="ocr-preview"><div style="background:var(--bg-input);border-radius:10px;padding:.8rem;font-size:.85rem;max-height:150px;overflow-y:auto;font-family:monospace;">${esc(clean.slice(0,1000))||'No text'}</div>${cand.length?`<div style="margin-top:1rem;"><strong style="color:var(--accent);">Click to search:</strong><div class="pill-list" style="margin-top:6px;">${cand.map(x=>`<button class="pill brand clickable" data-os="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`:''}</div>`;c.querySelectorAll('[data-os]').forEach(b=>b.addEventListener('click',()=>{$('searchInput').value=b.dataset.os;switchView('search');performSearch(b.dataset.os);}));}catch(e){c.innerHTML='<div class="error-box">OCR failed</div>';}}
+function initOCR(){const d=$('ocrDrop'),f=$('ocrFile');d.addEventListener('click',()=>f.click());d.addEventListener('dragover',e=>{e.preventDefault();d.style.borderColor='var(--accent)';});d.addEventListener('dragleave',()=>{d.style.borderColor='';});d.addEventListener('drop',e=>{e.preventDefault();d.style.borderColor='';if(e.dataTransfer.files[0])processUpload(e.dataTransfer.files[0]);});f.addEventListener('change',e=>{if(e.target.files[0])processUpload(e.target.files[0]);});}
+function processUpload(f){if(f.size>5*1024*1024){showToast('Too large','fa-times');return;}const r=new FileReader();r.onload=e=>runOCR(e.target.result,'ocrResult');r.readAsDataURL(f);}
+async function searchBarcode(q){if(!q)q=$('barcodeInput').value.trim();if(!q){showToast('Enter barcode','fa-barcode');return;}const r=$('barcodeResult');r.innerHTML='<div class="spinner"></div>';try{const resp=await fetch(`https://api.fda.gov/drug/ndc.json?search=packaging.package_ndc:"${encodeURIComponent(q)}"+product_ndc:"${encodeURIComponent(q)}"&limit=5`);if(!resp.ok)throw 0;const j=await resp.json();if(!j.results?.length){r.innerHTML='<div class="error-box">Not found</div>';return;}r.innerHTML=j.results.map(n=>`<div class="pill-result"><div class="pill-img"><i class="fas fa-barcode"></i></div><div style="flex:1;"><strong style="color:var(--accent);">${esc(n.brand_name||n.generic_name||'')}</strong><div style="font-size:.82rem;color:var(--text-soft);">${n.dosage_form?esc(n.dosage_form):''}</div></div><button class="action-btn" data-bq="${esc(n.brand_name||n.generic_name||'')}">Details</button></div>`).join('');r.querySelectorAll('[data-bq]').forEach(b=>b.addEventListener('click',()=>{$('searchInput').value=b.dataset.bq;switchView('search');performSearch(b.dataset.bq);}));}catch(e){r.innerHTML='<div class="error-box">Failed</div>';}}
+async function startBarcodeScan(){try{$('barcodeCameraWrap').style.display='block';state.barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});const v=$('barcodeVideo');v.srcObject=state.barcodeStream;const c=document.createElement('canvas'),ctx=c.getContext('2d');state.barcodeScanInterval=setInterval(()=>{if(!v.videoWidth)return;c.width=v.videoWidth;c.height=v.videoHeight;ctx.drawImage(v,0,0);const img=ctx.getImageData(0,0,c.width,c.height);const code=jsQR(img.data,img.width,img.height);if(code?.data){stopBarcodeScan();$('barcodeInput').value=code.data;showToast('Detected','fa-barcode');searchBarcode(code.data);}},400);}catch(e){showToast('Camera error','fa-times');}}
+function stopBarcodeScan(){if(state.barcodeStream){state.barcodeStream.getTracks().forEach(t=>t.stop());state.barcodeStream=null;}if(state.barcodeScanInterval){clearInterval(state.barcodeScanInterval);state.barcodeScanInterval=null;}$('barcodeCameraWrap').style.display='none';}
+function saveChatHistory(){localStorage.setItem('di:chatHistory',JSON.stringify(state.chatHistory.slice(-20)));}
+function renderChatHistory(){const el=$('chatHistory');if(!el)return;const r=state.chatHistory.slice(-5).reverse();if(!r.length){el.innerHTML='<p style="font-size:.75rem;color:var(--text-soft);padding:.5rem;">No recent</p>';return;}el.innerHTML=r.map(h=>`<button data-cq="${esc(h.q)}">${esc(h.q.slice(0,30))}</button>`).join('');el.querySelectorAll('[data-cq]').forEach(b=>b.addEventListener('click',()=>{$('chatInput').value=b.dataset.cq;sendChat();}));}
+async function sendChat(oq){const inp=$('chatInput');const q=oq||inp.value.trim();if(!q)return;inp.value='';const chat=$('chatContainer');chat.innerHTML+=`<div class="chat-msg user">${esc(q)}</div>`;chat.scrollTop=chat.scrollHeight;const lid='cl_'+Date.now();chat.innerHTML+=`<div class="chat-msg bot" id="${lid}"><span class="typing-dots"><span></span><span></span><span></span></span></div>`;chat.scrollTop=chat.scrollHeight;
+const clean=q.toLowerCase().replace(/what is|tell me about|about|uses of|side effects of|safe with|is|are|do|does|how|dosage of|brand names of|brands of|wikipedia about|wikipedia|the|a|an|for|with|and|or/gi,' ').replace(/\?/g,' ').replace(/\s+/g,' ').trim();const words=clean.split(' ').filter(w=>w.length>2);const dn=words.sort((a,b)=>b.length-a.length)[0]||clean;const tm=q.match(/([\w-]+)\s+(?:with|and|plus)\s+([\w-]+)/i);let d2=null;if(tm&&/interact|safe|with|and|plus/i.test(q)){d2=tm[2].trim();}
+try{const isSE=/side effect|adverse|risk/i.test(q);const isSafe=/safe|interact|mix|combine/i.test(q)&&d2;const isBr=/brand|trade/i.test(q);const isDos=/dosage|dose/i.test(q);const isUses=/used for|treat/i.test(q);const isWiki=/wiki/i.test(q);
+if(isSafe&&d2){const[r1,r2]=await Promise.all([fetch(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(dn)}`).then(r=>r.json()).catch(()=>null),fetch(`https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(d2)}`).then(r=>r.json()).catch(()=>null)]);const c1=r1?.idGroup?.rxnormId?.[0],c2=r2?.idGroup?.rxnormId?.[0];if(c1&&c2){const ir=await fetch(`https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis=${c1}+${c2}`);const ij=await ir.json();const g=ij.fullInteractionTypeGroup||[];if(!g.length){finishChat(lid,`No known interactions between <strong>${esc(dn)}</strong> and <strong>${esc(d2)}</strong>.<br><br><span class="src">RxNorm</span>`,q);return;}let t=`⚠️ Interactions:<ul>`;g.forEach(gr=>gr.fullInteractionType?.forEach(it=>it.interactionPair?.forEach(p=>{t+=`<li><strong>${esc(p.severity||'?')}</strong>: ${esc(p.description||'')}</li>`;})));t+='</ul><span class="src">RxNorm</span>';finishChat(lid,t,q);return;}}
+const d=await fetchAllData(dn,'all');const c=collectBrands(d);const l=d.label?.[0];const o=l?.openfda||{};
+if(!l&&!c.brands.length&&!d.pubchem&&!d.wikipedia){finishChat(lid,`Couldn't find "${esc(dn)}". Try a generic name.`,q);return;}
+const gen=o.generic_name?.[0]||c.generics[0]||dn;const pn=o.brand_name?.[0]||gen;const uses=l?.indications_and_usage?.[0]||l?.purpose?.[0];const warnings=l?.warnings?.[0];const boxed=l?.boxed_warning?.[0];const dosage=l?.dosage_and_administration?.[0];let a='';
+if(isWiki||(!isSE&&!isBr&&!isDos&&d.wikipedia)){
+a=`<strong>📖 Wikipedia: ${esc(d.wikipedia?.title||pn)}</strong><br><br>`;
+if(d.wikipedia?.thumbnail)a+=`<img src="${esc(d.wikipedia.thumbnail)}" style="max-width:200px;border-radius:8px;margin:6px 0;display:block;">`;
+if(d.wikipedia?.extract)a+=`<p style="font-size:.88rem;line-height:1.65;">${esc(d.wikipedia.extract.slice(0,800))}${d.wikipedia.extract.length>800?'…':''}</p>`;
+if(d.wikipedia?.url)a+=`<p style="margin-top:.6rem;"><a href="${esc(d.wikipedia.url)}" target="_blank" rel="noopener" style="color:var(--wiki);">Read full article →</a></p>`;
+a+=`<span class="src">Wikipedia</span>`;
+}
+else if(isSE){a=`⚠️ Side effects of ${esc(pn)}:<br>`;if(d.adverse?.length){const rs=new Set();d.adverse.forEach(ev=>(ev.reactions||[]).forEach(r=>r.reactionmeddrapt&&rs.add(r.reactionmeddrapt)));a+='<ul>'+[...rs].slice(0,10).map(r=>`<li>${esc(r)}</li>`).join('')+'</ul>';}if(warnings)a+=`<br><strong>Warnings:</strong> ${esc(warnings.slice(0,300))}`;a+=`<br><span class="src">FAERS</span>`;}
+else if(isBr){a=`🏷️ Brands of ${esc(gen)}:<ul>${c.brands.slice(0,15).map(b=>`<li><strong>${esc(b.name)}</strong>${b.manufacturer?` — ${esc(b.manufacturer)}`:''}</li>`).join('')}</ul>Total: <strong>${c.brands.length}</strong><br><span class="src">openFDA</span>`;}
+else if(isDos&&dosage){a=`💊 Dosage:<br>${esc(dosage.slice(0,700))}<br><span class="src">openFDA</span>`;}
+else if(uses){a=`<strong>${esc(pn)}</strong>${gen!==pn?` (generic: ${esc(gen)})`:''}<br>`;if(boxed)a+=`<div style="background:#ffe5e5;padding:.6rem;border-radius:8px;font-size:.82rem;margin-bottom:.8rem;"><strong>⚠️ BOXED:</strong> ${esc(boxed.slice(0,200))}...</div>`;a+=`<strong>Uses:</strong> ${esc(uses.slice(0,500))}<br><br>📊 Found: ${c.brands.length} brands${d.wikipedia?' · Wikipedia available':''}<br><span class="src">openFDA</span>`;}
+else{a=`Found <strong>${esc(pn)}</strong>. ${c.brands.length} brands. ${d.wikipedia?'Wikipedia article available.':''}`;}
+finishChat(lid,a,q);}catch(e){finishChat(lid,'Error. Try again.',q);}}
+function finishChat(lid,html,q){const el=$(lid);if(el)el.outerHTML=`<div class="chat-msg bot">${html}</div>`;else $('chatContainer').innerHTML+=`<div class="chat-msg bot">${html}</div>`;$('chatContainer').scrollTop=$('chatContainer').scrollHeight;state.chatHistory.push({q,t:Date.now()});saveChatHistory();renderChatHistory();}
+async function loadNews(){const r=$('newsResults');r.innerHTML='<div class="spinner"></div>';try{const resp=await fetch('https://api.fda.gov/drug/enforcement.json?limit=10&sort=report_date:desc');const j=await resp.json();const items=j.results||[];if(!items.length){r.innerHTML='<div class="info-note">No recent recalls</div>';return;}r.innerHTML=items.map(n=>`<div class="news-item"><h4><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i> ${esc(n.product_description?.slice(0,100)||'Recall')}</h4><div class="meta">${esc(n.recalling_firm||'')} · ${esc(n.report_date||'')}</div><p>${esc((n.reason_for_recall||'').slice(0,250))}</p></div>`).join('');}catch(e){r.innerHTML='<div class="error-box">Failed</div>';}}
+
+function bindEvents(){
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
+dom.btn.addEventListener('click',()=>performSearch(dom.input.value));
+dom.input.addEventListener('keydown',e=>{if(e.key==='Enter'){if(dom.autocomplete.classList.contains('show')&&state.acIndex>-1){dom.input.value=state.acItems[state.acIndex].name;dom.autocomplete.classList.remove('show');}performSearch(dom.input.value);}else if(e.key==='ArrowDown'){e.preventDefault();if(!dom.autocomplete.classList.contains('show'))return;state.acIndex=Math.min(state.acIndex+1,state.acItems.length-1);updateAc();}else if(e.key==='ArrowUp'){e.preventDefault();if(!dom.autocomplete.classList.contains('show'))return;state.acIndex=Math.max(state.acIndex-1,0);updateAc();}else if(e.key==='Escape'){dom.autocomplete.classList.remove('show');}});
+let acT;dom.input.addEventListener('input',e=>{clearTimeout(acT);acT=setTimeout(async()=>{const items=await fetchAC(e.target.value);renderAC(items,e.target.value);},220);});
+dom.autocomplete.addEventListener('click',e=>{const it=e.target.closest('.ac-item');if(it){dom.input.value=state.acItems[+it.dataset.idx].name;dom.autocomplete.classList.remove('show');performSearch(dom.input.value);}});
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))dom.autocomplete.classList.remove('show');});
+document.querySelectorAll('[data-quick]').forEach(b=>b.addEventListener('click',()=>{dom.input.value=b.dataset.quick;switchView('search');performSearch(b.dataset.quick);}));
+document.querySelectorAll('.mode-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mode-btn[data-mode]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.mode=b.dataset.mode;const l={all:'All',brand:'Brand',generic:'Generic',manufacturer:'Manufacturer'};dom.modeInfo.textContent=l[state.mode];if(state.currentQuery)performSearch(state.currentQuery);}));
+$('toggleSources').addEventListener('click',()=>{const g=$('sourceGrid');g.classList.toggle('collapsed');$('toggleSources').textContent=g.classList.contains('collapsed')?'Show':'Hide';});
+document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{applyTheme(b.dataset.theme);document.querySelectorAll('[data-theme]').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
+$('readingModeBtn').addEventListener('click',toggleReadingMode);
+$('unitSelect').addEventListener('change',e=>{state.unit=e.target.value;localStorage.setItem('di:unit',state.unit);showToast('Units: '+state.unit);});
+$('langSelect').addEventListener('change',e=>applyLang(e.target.value));$('langSelect').value=currentLang;
+$('micBtn').addEventListener('click',()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showToast('Not supported','fa-microphone-slash');return;}const r=new SR();r.lang={en:'en-US',ur:'ur-PK',ar:'ar-SA',hi:'hi-IN',es:'es-ES',fr:'fr-FR',zh:'zh-CN'}[currentLang]||'en-US';$('micBtn').classList.add('recording');showToast('Listening...','fa-microphone');r.onresult=e=>{const t=e.results[0][0].transcript;dom.input.value=t;performSearch(t);};r.onend=()=>$('micBtn').classList.remove('recording');r.start();});
+$('settingsBtn').addEventListener('click',()=>$('settingsModal').classList.add('show'));
+$('historyBtn').addEventListener('click',()=>{renderHistory();$('historyModal').classList.add('show');});
+$('disclaimerBtn').addEventListener('click',()=>$('disclaimerModal').classList.add('show'));
+$('clearCacheBtn').addEventListener('click',()=>{state.cache={};localStorage.removeItem('di:cache');AC.clear();showToast('Cache cleared','fa-trash');});
+$('clearHistoryBtn').addEventListener('click',()=>{state.history=[];localStorage.removeItem('di:history');renderHistory();showToast('Cleared','fa-trash');});
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+$('pillSearchBtn').addEventListener('click',searchPills);
+$('compareAddBtn').addEventListener('click',()=>{const v=$('compareSelect').value;if(!v||state.compareList.includes(v)){showToast('Already added');return;}state.compareList.push(v);renderCompare();});
+$('compareClearBtn').addEventListener('click',()=>{state.compareList=[];renderCompare();});
+$('interactionAddBtn').addEventListener('click',()=>{const v=$('interactionInput').value.trim();if(!v)return;if(state.interactionList.includes(v)){showToast('Already added');return;}state.interactionList.push(v);$('interactionInput').value='';renderIntList();});
+$('interactionInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('interactionAddBtn').click();});
+$('checkInteractionsBtn').addEventListener('click',checkInteractions);
+$('globalSelect').addEventListener('change',renderGlobal);
+$('findPharmacyGPS').addEventListener('click',findPharmacyGPS);
+$('findPharmacyAddress').addEventListener('click',findPharmacyAddress);
+$('pharmacyAddress').addEventListener('keydown',e=>{if(e.key==='Enter')findPharmacyAddress();});
+$('addReminderBtn').addEventListener('click',addReminder);
+document.querySelectorAll('.scan-tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.scan-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');['camera','upload','barcode'].forEach(p=>{const el=$('scan-'+p);if(el)el.style.display=p===t.dataset.scan?'block':'none';});if(t.dataset.scan!=='camera')stopCamera();if(t.dataset.scan!=='barcode')stopBarcodeScan();}));
+$('cameraStartBtn').addEventListener('click',startCamera);$('cameraStopBtn').addEventListener('click',stopCamera);$('cameraSwitchBtn').addEventListener('click',switchCamera);$('cameraCaptureBtn').addEventListener('click',captureFromCamera);
+initOCR();
+$('barcodeBtn').addEventListener('click',()=>searchBarcode());$('barcodeInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchBarcode();});$('barcodeScanBtn').addEventListener('click',startBarcodeScan);
+$('chatSendBtn').addEventListener('click',()=>sendChat());$('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+document.querySelectorAll('[data-chatq]').forEach(b=>b.addEventListener('click',()=>{$('chatInput').value=b.dataset.chatq;sendChat();}));
+$('clearChatBtn').addEventListener('click',()=>{state.chatHistory=[];saveChatHistory();renderChatHistory();$('chatContainer').innerHTML='<div class="chat-msg bot">Cleared.</div>';});
+$('loadNewsBtn').addEventListener('click',loadNews);
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();switchView('search');dom.input.focus();dom.input.select();}const ty=/input|textarea|select/i.test(document.activeElement.tagName);if(ty)return;if(e.key==='h'||e.key==='H'){renderHistory();$('historyModal').classList.add('show');}if(e.key==='d'||e.key==='D')applyTheme(state.theme==='dark'?'light':'dark');if(e.key==='/'){e.preventDefault();switchView('search');dom.input.focus();}});
+const params=new URLSearchParams(location.search);const dp=params.get('drug');if(dp){dom.input.value=dp;switchView('search');setTimeout(()=>performSearch(dp),300);}}
+function renderIntList(){const s=$('interactionSelected');s.innerHTML=state.interactionList.map(d=>`<span class="drug-chip">${esc(d)} <button data-ri="${esc(d)}"><i class="fas fa-times"></i></button></span>`).join('');s.querySelectorAll('[data-ri]').forEach(b=>b.addEventListener('click',()=>{state.interactionList=state.interactionList.filter(x=>x!==b.dataset.ri);renderIntList();}));}
+function updateAc(){dom.autocomplete.querySelectorAll('.ac-item').forEach((el,i)=>el.classList.toggle('selected',i===state.acIndex));}
+function init(){applyTheme(state.theme);applyLang(currentLang);if(state.readingMode)document.body.classList.add('reading-mode');$('unitSelect').value=state.unit;bindEvents();renderReminders();renderCompare();renderIntList();renderChatHistory();console.log('%c💊 DrugInfo v10 WIKIPEDIA EDITION ready','color:#636363;font-weight:bold;font-size:15px;');}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</body>
+</html>
