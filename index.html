@@ -3,7 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DrugInfo Live v10 · Wikipedia Edition</title>
+<title>DrugInfo Live — Free Drug Information Search Across 21 Trusted Sources</title>
+<meta name="description" content="Search any medicine by brand or generic name and get consolidated drug information — FDA labels, dosages, warnings, interactions, recalls and clinical trials — from openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, MedlinePlus, ClinicalTrials.gov and Wikipedia, all in one page.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<link rel="canonical" href="https://wasi145.github.io/Drogus/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DrugInfo Live">
+<meta property="og:title" content="DrugInfo Live — Free Drug Information Search Across 21 Trusted Sources">
+<meta property="og:description" content="Look up any medicine by brand or generic name: FDA label, dosage, warnings, interactions, recalls and clinical trials consolidated from 21 trusted sources in one search.">
+<meta property="og:url" content="https://wasi145.github.io/Drogus/">
+<meta property="og:image" content="https://wasi145.github.io/Drogus/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DrugInfo Live — drug information search across 21 trusted sources">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DrugInfo Live — Free Drug Information Search Across 21 Trusted Sources">
+<meta name="twitter:description" content="Look up any medicine by brand or generic name: FDA label, dosage, warnings, interactions, recalls and clinical trials from 21 trusted sources in one search.">
+<meta name="twitter:image" content="https://wasi145.github.io/Drogus/og-image.jpg">
+<meta name="twitter:image:alt" content="DrugInfo Live — drug information search across 21 trusted sources">
+
+<!-- Structured data: WebSite + SearchAction -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://wasi145.github.io/Drogus/#website",
+  "name": "DrugInfo Live",
+  "alternateName": "DrugInfo",
+  "url": "https://wasi145.github.io/Drogus/",
+  "description": "Free drug information search engine that consolidates FDA labels, dosages, warnings, drug interactions, recalls and clinical trials from 21 trusted sources including openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, MedlinePlus, ClinicalTrials.gov and Wikipedia.",
+  "inLanguage": "en",
+  "publisher": {
+    "@id": "https://wasi145.github.io/Drogus/#organization"
+  },
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://wasi145.github.io/Drogus/details.html?drug={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
+<!-- Structured data: Organization -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://wasi145.github.io/Drogus/#organization",
+  "name": "DrugInfo Live",
+  "url": "https://wasi145.github.io/Drogus/",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://wasi145.github.io/Drogus/og-image.jpg",
+    "width": 1200,
+    "height": 630
+  },
+  "description": "An open, ad-free drug information reference that aggregates official regulatory and biomedical data sources into a single searchable encyclopedia.",
+  "knowsAbout": [
+    "pharmacology",
+    "drug information",
+    "medication safety",
+    "adverse drug reactions",
+    "drug interactions",
+    "clinical trials",
+    "drug recalls"
+  ]
+}
+</script>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
@@ -196,6 +271,11 @@ body.dark .action-btn.wiki-link{background:#2a2a2a;color:#c0c0c0;border-color:#4
 @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
 .news-item{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem;margin-bottom:.7rem;}
 .news-item h4{font-size:.95rem;color:var(--text);margin-bottom:.3rem;}
+.seo-intro{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;box-shadow:var(--shadow);}
+.seo-intro p{font-size:.86rem;line-height:1.65;color:var(--text-soft);margin-bottom:.6rem;}
+.seo-intro p:last-child{margin-bottom:0;}
+.seo-intro strong{color:var(--text);}
+.seo-intro .seo-note{font-size:.76rem;line-height:1.5;color:var(--text-soft);border-top:1px dashed var(--border);padding-top:.55rem;}
 .news-item .meta{font-size:.72rem;color:var(--text-soft);margin-bottom:.5rem;}
 .news-item p{font-size:.85rem;color:var(--text-soft);line-height:1.5;}
 .history-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.8rem 1rem;margin-bottom:.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:.15s;}
@@ -240,6 +320,11 @@ footer{text-align:center;padding:1.4rem 1rem;font-size:.75rem;color:var(--text-s
 </div>
 
 <div class="view active" id="view-search">
+<section class="seo-intro">
+<p>DrugInfo is a free, ad-free drug information search engine. Type any brand, generic or trade name to pull its full profile together in one page: the FDA-approved label, indications, dosage and administration, boxed warnings, contraindications, adverse reactions and drug interactions, plus recalls, shortages, patent status and registered products, and the matching Wikipedia and Wikidata entries with licensed images.</p>
+<p>Profiles are compiled live from <strong>21 trusted sources</strong> — openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, WHO INN, ClinicalTrials.gov, MedlinePlus, Wikipedia, Wikidata, Wikimedia Commons and more — so you always see the most recent regulatory data instead of a cached copy. Also included: pill identification by imprint, side-by-side drug comparison, an interaction checker, and a global availability view.</p>
+<p class="seo-note">Educational reference only — not medical advice. Always confirm dosing, interactions and warnings with a licensed healthcare professional or pharmacist.</p>
+</section>
 <div class="search-wrap">
 <div class="search-box">
 <input type="text" id="searchInput" placeholder="Search any drug, brand, or trade name..." autocomplete="off">
