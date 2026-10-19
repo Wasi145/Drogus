@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DrugInfo">
+  <rect width="64" height="64" rx="14" fill="#2c7da0"/>
+  <g transform="rotate(-45 32 32)">
+    <rect x="15" y="23" width="34" height="18" rx="9" fill="#ffffff" opacity="0.95"/>
+    <path d="M32 23h8a9 9 0 0 1 0 18h-8z" fill="#8fe0d8"/>
+    <rect x="15" y="23" width="34" height="18" rx="9" fill="none" stroke="#0b2b4b" stroke-opacity="0.25" stroke-width="1.5"/>
+  </g>
+</svg>
