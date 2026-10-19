@@ -1,0 +1,50 @@
+# ============================================================
+#  robots.txt - DrugInfo Live v10 . Wikipedia Edition
+#  Site:    https://wasi145.github.io/Drogus/
+#  Host:    GitHub Pages (project site served from /Drogus/)
+#  Updated: 2026-10-19
+# ============================================================
+
+# ---------- Default: allow all crawlers on public content ----------
+User-agent: *
+Allow: /Drogus/
+
+# ---------- Explicitly allow rendering assets ----------
+# CSS, JS, images and fonts must stay crawlable so search engines
+# can render the client-side app and evaluate Core Web Vitals.
+Allow: /Drogus/*.css
+Allow: /Drogus/*.js
+Allow: /Drogus/*.mjs
+Allow: /Drogus/*.png
+Allow: /Drogus/*.jpg
+Allow: /Drogus/*.jpeg
+Allow: /Drogus/*.gif
+Allow: /Drogus/*.svg
+Allow: /Drogus/*.webp
+Allow: /Drogus/*.avif
+Allow: /Drogus/*.ico
+Allow: /Drogus/*.woff
+Allow: /Drogus/*.woff2
+Allow: /Drogus/*.ttf
+
+# ---------- Block non-content / build artefacts ----------
+Disallow: /Drogus/.git/
+Disallow: /Drogus/.github/
+Disallow: /Drogus/node_modules/
+Disallow: /Drogus/.vscode/
+Disallow: /Drogus/*.map$
+Disallow: /Drogus/package.json
+Disallow: /Drogus/package-lock.json
+Disallow: /Drogus/README.md
+Disallow: /Drogus/LICENSE
+Disallow: /Drogus/404.html
+
+# ---------- Optional: suppress parameterised drug views ----------
+# details.html?drug=... renders client-side and is NOT indexable.
+# Uncomment ONLY if you want to stop crawlers spending budget on
+# these non-indexable variants. Keep details.html itself allowed.
+# Disallow: /Drogus/details.html?drug=
+# Disallow: /Drogus/*?drug=
+
+# ---------- Sitemap ----------
+Sitemap: https://wasi145.github.io/Drogus/sitemap.xml
