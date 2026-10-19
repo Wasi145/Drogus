@@ -1,1 +1,404 @@
-__SEE_FILE__
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DrugInfo Live — Free Drug Information Search Across 21 Trusted Sources</title>
+<meta name="description" content="Search any medicine by brand or generic name and get consolidated drug information — FDA labels, dosages, warnings, interactions, recalls and clinical trials — from openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, MedlinePlus, ClinicalTrials.gov and Wikipedia, all in one page.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<link rel="canonical" href="https://wasi145.github.io/Drogus/">
+
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta name="theme-color" content="#2c7da0">
+<meta name="color-scheme" content="light dark">
+
+<link rel="preconnect" href="https://api.fda.gov" crossorigin>
+<link rel="preconnect" href="https://rxnav.nlm.nih.gov" crossorigin>
+<link rel="dns-prefetch" href="https://pubchem.ncbi.nlm.nih.gov">
+<link rel="dns-prefetch" href="https://en.wikipedia.org">
+<link rel="dns-prefetch" href="https://query.wikidata.org">
+<link rel="dns-prefetch" href="https://clinicaltrials.gov">
+<link rel="dns-prefetch" href="https://dailymed.nlm.nih.gov">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DrugInfo Live">
+<meta property="og:title" content="DrugInfo Live — Free Drug Information Search Across 21 Trusted Sources">
+<meta property="og:description" content="Look up any medicine by brand or generic name: FDA label, dosage, warnings, interactions, recalls and clinical trials consolidated from 21 trusted sources in one search.">
+<meta property="og:url" content="https://wasi145.github.io/Drogus/">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://wasi145.github.io/Drogus/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DrugInfo Live — free drug information search across 21 trusted sources">
+<meta property="og:image:type" content="image/png">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DrugInfo Live — Free Drug Information Search Across 21 Trusted Sources">
+<meta name="twitter:description" content="Look up any medicine by brand or generic name: FDA label, dosage, warnings, interactions, recalls and clinical trials from 21 trusted sources in one search.">
+<meta name="twitter:image" content="https://wasi145.github.io/Drogus/og-image.png">
+<meta name="twitter:image:alt" content="DrugInfo Live — free drug information search">
+
+<!-- Structured data: WebSite + SearchAction -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://wasi145.github.io/Drogus/#website",
+  "name": "DrugInfo Live",
+  "alternateName": "DrugInfo",
+  "url": "https://wasi145.github.io/Drogus/",
+  "description": "Free drug information search engine that consolidates FDA labels, dosages, warnings, drug interactions, recalls and clinical trials from 21 trusted sources including openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, MedlinePlus, ClinicalTrials.gov and Wikipedia.",
+  "inLanguage": "en",
+  "publisher": {
+    "@id": "https://wasi145.github.io/Drogus/#organization"
+  },
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://wasi145.github.io/Drogus/details.html?drug={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
+<!-- Structured data: Organization -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://wasi145.github.io/Drogus/#organization",
+  "name": "DrugInfo Live",
+  "url": "https://wasi145.github.io/Drogus/",
+  "description": "An open, ad-free drug information reference that aggregates official regulatory and biomedical data sources into a single searchable encyclopedia.",
+  "knowsAbout": [
+    "pharmacology",
+    "drug information",
+    "medication safety",
+    "adverse drug reactions",
+    "drug interactions",
+    "clinical trials",
+    "drug recalls"
+  ]
+}
+</script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<link rel="stylesheet" href="assets/app.min.css">
+</head>
+<body>
+<div class="container">
+<header>
+<h1><i class="fas fa-capsules"></i> DrugInfo <span class="badge multi">v10 · +WIKIPEDIA</span></h1>
+<div class="actions">
+<select class="lang-select" id="langSelect"><option value="en">🇬🇧 EN</option><option value="ur">🇵🇰 UR</option><option value="ar">🇸🇦 AR</option><option value="hi">🇮🇳 HI</option><option value="es">🇪🇸 ES</option><option value="fr">🇫🇷 FR</option><option value="zh">🇨🇳 ZH</option></select>
+<button class="icon-btn" id="historyBtn" title="History"><i class="fas fa-history"></i></button>
+<button class="icon-btn" id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
+<button class="icon-btn" id="disclaimerBtn" title="Disclaimer"><i class="fas fa-info-circle"></i></button>
+<button class="icon-btn" id="clearCacheBtn" title="Clear cache"><i class="fas fa-trash"></i></button>
+</div>
+</header>
+<div class="tabs" id="tabs">
+<button class="tab active" data-view="search"><i class="fas fa-search"></i> Search</button>
+<button class="tab" data-view="pill"><i class="fas fa-pills"></i> Pill ID</button>
+<button class="tab" data-view="compare"><i class="fas fa-balance-scale"></i> Compare</button>
+<button class="tab" data-view="interactions"><i class="fas fa-exclamation-triangle"></i> Interactions</button>
+<button class="tab" data-view="global"><i class="fas fa-globe"></i> Global</button>
+<button class="tab" data-view="pharmacy"><i class="fas fa-map-marker-alt"></i> Pharmacies</button>
+<button class="tab" data-view="reminders"><i class="fas fa-bell"></i> Reminders</button>
+<button class="tab" data-view="scan"><i class="fas fa-camera"></i> Scan</button>
+<button class="tab" data-view="chat"><i class="fas fa-robot"></i> AI Chat</button>
+<button class="tab" data-view="news"><i class="fas fa-newspaper"></i> News</button>
+</div>
+
+<div class="view active" id="view-search">
+<section class="seo-intro">
+<p>DrugInfo is a free, ad-free drug information search engine. Type any brand, generic or trade name to pull its full profile together in one page: the FDA-approved label, indications, dosage and administration, boxed warnings, contraindications, adverse reactions and drug interactions, plus recalls, shortages, patent status and registered products, and the matching Wikipedia and Wikidata entries with licensed images.</p>
+<p>Profiles are compiled live from <strong>21 trusted sources</strong> — openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, WHO INN, ClinicalTrials.gov, MedlinePlus, Wikipedia, Wikidata, Wikimedia Commons and more — so you always see the most recent regulatory data instead of a cached copy. Also included: pill identification by imprint, side-by-side drug comparison, an interaction checker, and a global availability view.</p>
+<p class="seo-note">Educational reference only — not medical advice. Always confirm dosing, interactions and warnings with a licensed healthcare professional or pharmacist.</p>
+</section>
+<div class="search-wrap">
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="Search any drug, brand, or trade name..." autocomplete="off">
+<button class="mic-btn" id="micBtn" title="Voice"><i class="fas fa-microphone"></i></button>
+<button id="searchBtn"><i class="fas fa-search"></i> <span>Search</span></button>
+</div>
+<div class="autocomplete" id="autocomplete"></div>
+</div>
+<div class="quick-searches">
+<button data-quick="Tylenol">Tylenol</button><button data-quick="Crocin">Crocin</button>
+<button data-quick="Panadol">Panadol</button><button data-quick="Lipitor">Lipitor</button>
+<button data-quick="Glucophage">Glucophage</button><button data-quick="Zithromax">Zithromax</button>
+<button data-quick="Advil">Advil</button><button data-quick="Prilosec">Prilosec</button>
+</div>
+<div class="mode-bar">
+<button class="mode-btn active" data-mode="all"><i class="fas fa-globe"></i> All</button>
+<button class="mode-btn" data-mode="brand"><i class="fas fa-tag"></i> Brand</button>
+<button class="mode-btn" data-mode="generic"><i class="fas fa-pills"></i> Generic</button>
+<button class="mode-btn" data-mode="manufacturer"><i class="fas fa-industry"></i> Manufacturer</button>
+<span class="mode-info" id="modeInfo">Searching all fields</span>
+</div>
+<div class="source-panel">
+<h4><i class="fas fa-database"></i> 21 Data Sources (parallel) <button id="toggleSources">Hide</button></h4>
+<div class="source-grid" id="sourceGrid">
+<div class="source-item"><span class="dot"></span><span class="name">openFDA Label</span><span class="desc">US Labels</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">openFDA NDC</span><span class="desc">Products</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">FAERS</span><span class="desc">Adverse</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Enforcement</span><span class="desc">Recalls</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Shortages</span><span class="desc">Shortages</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Orange Book</span><span class="desc">Patents</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">Drugs@FDA</span><span class="desc">Approvals</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">RxNorm</span><span class="desc">Names</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">RxNorm DDI</span><span class="desc">Interactions</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">PubChem</span><span class="desc">Chemistry</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">PubChem Syn</span><span class="desc">Aliases</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">DailyMed</span><span class="desc">NLM</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">ClinicalTrials</span><span class="desc">Trials</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">MedlinePlus</span><span class="desc">Consumer</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">WHO INN</span><span class="desc">Global</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wikipedia</span><span class="desc">Encyclopedia</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wikidata</span><span class="desc">Structured</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wikimedia Commons</span><span class="desc">Images</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">Wiktionary</span><span class="desc">Definitions</span></div>
+<div class="source-item wiki"><span class="dot"></span><span class="name">WikiData Claims</span><span class="desc">Properties</span></div>
+<div class="source-item"><span class="dot"></span><span class="name">OpenStreetMap</span><span class="desc">Pharmacies</span></div>
+</div>
+</div>
+<div class="status-bar"><div id="apiStatus">Ready</div></div>
+<div id="resultContainer">
+<div class="empty"><i class="fas fa-search"></i><p><strong>Search any medicine, drug, or brand</strong></p><p style="font-size:.85rem;margin-top:.5rem;">Now with Wikipedia, Wikidata, Wikimedia Commons & Wiktionary</p></div>
+</div>
+</div>
+
+<div class="view" id="view-pill">
+<div class="card">
+<h3><i class="fas fa-pills"></i> Pill Identifier <span class="src-badge">openFDA NDC</span></h3>
+<div class="pill-search-grid">
+<div class="field-group"><label>Imprint</label><input type="text" id="pillImprint" placeholder="L484"></div>
+<div class="field-group"><label>Color</label><select id="pillColor"><option value="">Any</option><option value="white">White</option><option value="yellow">Yellow</option><option value="blue">Blue</option><option value="green">Green</option><option value="red">Red</option><option value="orange">Orange</option><option value="pink">Pink</option></select></div>
+<div class="field-group"><label>Shape</label><select id="pillShape"><option value="">Any</option><option value="round">Round</option><option value="oval">Oval</option><option value="capsule">Capsule</option><option value="rectangle">Rectangle</option></select></div>
+</div>
+<button class="action-btn primary" id="pillSearchBtn"><i class="fas fa-search"></i> Search Pills</button>
+<div id="pillResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-compare">
+<div class="card">
+<h3><i class="fas fa-balance-scale"></i> Compare Drugs <span class="src-badge">Multi-source</span></h3>
+<div class="drug-selector">
+<select class="drug-input" id="compareSelect" style="flex:1;">
+<option value="">— Add a drug —</option>
+<option value="tylenol">Tylenol</option><option value="advil">Advil</option><option value="aspirin">Aspirin</option>
+<option value="lipitor">Lipitor</option><option value="glucophage">Glucophage</option><option value="prilosec">Prilosec</option>
+<option value="zithromax">Zithromax</option><option value="amoxil">Amoxil</option><option value="synthroid">Synthroid</option>
+</select>
+<button class="action-btn" id="compareAddBtn"><i class="fas fa-plus"></i> Add</button>
+<button class="action-btn" id="compareClearBtn"><i class="fas fa-times"></i> Clear</button>
+</div>
+<div class="selected-drugs" id="compareSelected"></div>
+<div id="compareResults"></div>
+</div>
+</div>
+
+<div class="view" id="view-interactions">
+<div class="card">
+<h3><i class="fas fa-exclamation-triangle"></i> Interaction Checker <span class="src-badge">RxNorm</span></h3>
+<div class="drug-selector">
+<input type="text" class="drug-input" id="interactionInput" placeholder="Drug name (Warfarin)">
+<button class="action-btn primary" id="interactionAddBtn"><i class="fas fa-plus"></i> Add</button>
+</div>
+<div class="selected-drugs" id="interactionSelected"></div>
+<button class="action-btn primary" id="checkInteractionsBtn"><i class="fas fa-shield-alt"></i> Check</button>
+<div id="interactionResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-global">
+<div class="card">
+<h3><i class="fas fa-globe"></i> Global Drug Names <span class="src-badge">WHO INN</span></h3>
+<div class="drug-selector">
+<select class="drug-input" id="globalSelect" style="flex:1;">
+<option value="">— Select —</option>
+<option value="paracetamol">Paracetamol</option><option value="ibuprofen">Ibuprofen</option>
+<option value="aspirin">Aspirin</option><option value="metformin">Metformin</option>
+<option value="omeprazole">Omeprazole</option><option value="atorvastatin">Atorvastatin</option>
+<option value="amoxicillin">Amoxicillin</option><option value="azithromycin">Azithromycin</option>
+</select>
+</div>
+<div id="globalResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-pharmacy">
+<div class="card">
+<h3><i class="fas fa-map-marker-alt"></i> Pharmacy Locator <span class="src-badge">OpenStreetMap</span></h3>
+<div class="pharmacy-toolbar">
+<button class="action-btn primary" id="findPharmacyGPS"><i class="fas fa-location-arrow"></i> GPS</button>
+<input type="text" id="pharmacyAddress" placeholder="City (Lahore, London, NYC...)">
+<button class="action-btn" id="findPharmacyAddress"><i class="fas fa-search"></i> Search</button>
+</div>
+<div class="pharmacy-toolbar">
+<select id="pharmacyRadius"><option value="1000">1 km</option><option value="3000" selected>3 km</option><option value="5000">5 km</option><option value="10000">10 km</option></select>
+<select id="pharmacyType"><option value="pharmacy" selected>Pharmacies</option><option value="hospital">Hospitals</option><option value="clinic">Clinics</option><option value="doctors">Doctors</option></select>
+<label style="font-size:.8rem;display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="pharmacyOpenNow"> Open now</label>
+</div>
+<div id="pharmacyResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-reminders">
+<div class="card">
+<h3><i class="fas fa-bell"></i> Medication Reminders</h3>
+<div class="drug-selector" style="flex-direction:column;align-items:stretch;">
+<input type="text" class="drug-input" id="reminderDrug" placeholder="Drug name">
+<input type="time" class="drug-input" id="reminderTime" value="08:00">
+<input type="text" class="drug-input" id="reminderDose" placeholder="Dose">
+<button class="action-btn primary" id="addReminderBtn"><i class="fas fa-plus"></i> Add</button>
+</div>
+<div id="reminderList" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<div class="view" id="view-scan">
+<div class="card">
+<h3><i class="fas fa-camera"></i> Smart Scanner <span class="src-badge">Tesseract + jsQR</span></h3>
+<div class="scan-tabs">
+<button class="scan-tab active" data-scan="camera"><i class="fas fa-video"></i> Camera</button>
+<button class="scan-tab" data-scan="upload"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+<button class="scan-tab" data-scan="barcode"><i class="fas fa-barcode"></i> Barcode</button>
+</div>
+<div id="scan-camera" class="scan-panel">
+<div class="camera-wrap"><video id="cameraVideo" autoplay playsinline muted></video><div class="camera-overlay"><div class="scan-frame"></div></div></div>
+<div class="camera-controls">
+<button id="cameraStartBtn"><i class="fas fa-play"></i> Start</button>
+<button id="cameraCaptureBtn" disabled><i class="fas fa-camera"></i> Capture</button>
+<button id="cameraSwitchBtn" disabled><i class="fas fa-sync-alt"></i> Switch</button>
+<button id="cameraStopBtn" class="danger" disabled><i class="fas fa-stop"></i> Stop</button>
+</div>
+<div id="cameraResult"></div>
+</div>
+<div id="scan-upload" class="scan-panel" style="display:none;">
+<div class="file-drop" id="ocrDrop"><i class="fas fa-cloud-upload-alt"></i><p><strong>Click to upload</strong> or drag &amp; drop</p></div>
+<input type="file" id="ocrFile" accept="image/*" style="display:none;">
+<div id="ocrPreview" style="margin-top:1rem;"></div>
+<div id="ocrResult" style="margin-top:1rem;"></div>
+</div>
+<div id="scan-barcode" class="scan-panel" style="display:none;">
+<div class="drug-selector">
+<input type="text" class="drug-input" id="barcodeInput" placeholder="Barcode (NDC/UPC)">
+<button class="action-btn primary" id="barcodeBtn"><i class="fas fa-search"></i> Search</button>
+<button class="action-btn" id="barcodeScanBtn"><i class="fas fa-camera"></i> Scan</button>
+</div>
+<div class="camera-wrap" id="barcodeCameraWrap" style="display:none;margin-top:1rem;"><video id="barcodeVideo" autoplay playsinline muted></video></div>
+<div id="barcodeResult" style="margin-top:1rem;"></div>
+</div>
+</div>
+</div>
+
+<div class="view" id="view-chat">
+<div class="chat-layout">
+<div class="chat-sidebar">
+<h4><i class="fas fa-bolt"></i> Quick Questions</h4>
+<button data-chatq="What is Tylenol used for?"><i class="fas fa-question-circle"></i> What is Tylenol used for?</button>
+<button data-chatq="Side effects of ibuprofen"><i class="fas fa-exclamation-triangle"></i> Ibuprofen side effects</button>
+<button data-chatq="Tell me about Metformin"><i class="fas fa-info-circle"></i> About Metformin</button>
+<button data-chatq="Is aspirin safe with warfarin?"><i class="fas fa-shield-alt"></i> Aspirin + Warfarin</button>
+<button data-chatq="What are the brands of paracetamol?"><i class="fas fa-tags"></i> Paracetamol brands</button>
+<button data-chatq="Wikipedia about ibuprofen"><i class="fab fa-wikipedia-w"></i> Wikipedia: ibuprofen</button>
+<h4 style="margin-top:1rem;"><i class="fas fa-clock"></i> Recent</h4>
+<div id="chatHistory"></div>
+<button style="margin-top:1rem;background:transparent;border:1px dashed var(--border);" id="clearChatBtn"><i class="fas fa-trash"></i> Clear</button>
+</div>
+<div>
+<div class="card">
+<h3><i class="fas fa-robot"></i> AI Assistant <span class="src-badge">Multi-source + Wikipedia</span></h3>
+<div class="chat-container" id="chatContainer">
+<div class="chat-msg bot">👋 <strong>Hello!</strong> Ask me about any drug.<br><br>Now with Wikipedia!<ul><li>"What is Tylenol used for?"</li><li>"Side effects of ibuprofen"</li><li>"Wikipedia about aspirin"</li></ul><small>⚠️ Not a substitute for medical advice</small></div>
+</div>
+<div class="chat-input-row"><input type="text" id="chatInput" placeholder="Ask a question..."><button id="chatSendBtn"><i class="fas fa-paper-plane"></i></button></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="view" id="view-news">
+<div class="card">
+<h3><i class="fas fa-newspaper"></i> Drug Recalls &amp; News <span class="src-badge">openFDA</span></h3>
+<button class="action-btn primary" id="loadNewsBtn"><i class="fas fa-sync"></i> Load Latest</button>
+<div id="newsResults" style="margin-top:1rem;"></div>
+</div>
+</div>
+
+<footer>
+<p><i class="fas fa-shield-alt"></i> 21 sources: openFDA · RxNorm · PubChem · DailyMed · Drugs@FDA · FAERS · WHO INN · ClinicalTrials · MedlinePlus · Wikipedia · Wikidata · Wikimedia Commons · Wiktionary · OpenStreetMap</p>
+<p style="margin-top:.3rem;">⚠️ Not medical advice.</p>
+<p style="margin-top:.3rem;">📄 <a href="details.html" style="color:var(--accent);">Full Encyclopedia Page →</a></p>
+<p style="margin-top:.3rem;">Press <span class="kbd">Ctrl</span>+<span class="kbd">K</span> search · <span class="kbd">H</span> history · <span class="kbd">D</span> dark</p>
+<p style="margin-top:.3rem;font-size:.7rem;">Wikipedia content licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" style="color:var(--accent);">CC BY-SA 4.0</a></p>
+</footer>
+</div>
+
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
+
+<div class="modal-overlay" id="settingsModal">
+<div class="modal">
+<h3><span><i class="fas fa-cog"></i> Settings</span><button onclick="document.getElementById('settingsModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<div><label style="font-size:.8rem;color:var(--accent);text-transform:uppercase;font-weight:600;">Theme</label>
+<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+<button class="mode-btn active" data-theme="light">☀️ Light</button>
+<button class="mode-btn" data-theme="dark">🌙 Dark</button>
+<button class="mode-btn" data-theme="sepia">📖 Sepia</button>
+<button class="mode-btn" data-theme="high-contrast">🔲 Contrast</button>
+</div></div>
+<div><label style="font-size:.8rem;color:var(--accent);text-transform:uppercase;font-weight:600;">Reading Mode</label>
+<div style="margin-top:6px;"><button class="mode-btn" id="readingModeBtn"><i class="fas fa-book-open"></i> Toggle</button></div></div>
+<div><label style="font-size:.8rem;color:var(--accent);text-transform:uppercase;font-weight:600;">Units</label>
+<div style="margin-top:6px;"><select class="mode-btn" id="unitSelect" style="padding:6px 12px;"><option value="metric">Metric</option><option value="imperial">Imperial</option></select></div></div>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="historyModal">
+<div class="modal">
+<h3><span><i class="fas fa-history"></i> History</span><button onclick="document.getElementById('historyModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<div id="historyList"></div>
+<button class="action-btn" id="clearHistoryBtn" style="margin-top:1rem;"><i class="fas fa-trash"></i> Clear</button>
+</div>
+</div>
+
+<div class="modal-overlay" id="disclaimerModal">
+<div class="modal">
+<h3><span><i class="fas fa-info-circle"></i> Disclaimer</span><button onclick="document.getElementById('disclaimerModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<div class="disclaimer-text">
+<h4>⚠️ Important</h4>
+<p><strong>This website is for informational purposes only.</strong> NOT a substitute for professional medical advice.</p>
+<p>Always consult your physician or pharmacist before taking any medication.</p>
+<p>If you have a medical emergency, call your local emergency number.</p>
+<h4>📊 Data Sources</h4>
+<p>Primary medical data: openFDA, RxNorm, PubChem, DailyMed, Drugs@FDA, FAERS, ClinicalTrials.gov, MedlinePlus.</p>
+<p>Supplementary encyclopedia: <strong>Wikipedia, Wikidata, Wikimedia Commons, Wiktionary</strong> — licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" style="color:var(--accent);">CC BY-SA 4.0</a> and <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" style="color:var(--accent);">CC0</a>.</p>
+<p><strong>Note:</strong> Wikipedia is a secondary source and may contain inaccuracies. Always verify drug information with a healthcare professional.</p>
+<h4>🔒 Privacy</h4>
+<p>No tracking, no ads. All searches cached locally in your browser.</p>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="qrModal">
+<div class="modal" style="text-align:center;">
+<h3><span><i class="fas fa-qrcode"></i> Share</span><button onclick="document.getElementById('qrModal').classList.remove('show')"><i class="fas fa-times"></i></button></h3>
+<canvas id="qrCanvas" style="max-width:100%;"></canvas>
+</div>
+</div>
+
+<script src="assets/app.min.js"></script>
+</body>
+</html>
